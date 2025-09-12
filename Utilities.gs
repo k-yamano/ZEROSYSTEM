@@ -1,111 +1,134 @@
 /**
- * 評価担当者へ初期メールを送信する
+ * 二次評価をWebアプリから受け取り処理する
  */
-function sendInitialEmail_(department, reporterEmail, id, subject, details) {
-  if (!reporterEmail) { Logger.log('メールアドレスが空のため、メール通知をスキップしました。'); return; }
-  const url = buildIncidentUrl(id);
-  const mailSubject = `[リスクアセスメント] 新規報告がありました (ID: ${id})`;
-  const body = `${department} の担当者様\n\n新しいインシデント報告がありました。\nAIによる一次評価が完了しましたので、内容を確認してください。\n\nID: ${id}\n件名: ${subject}\n内容:\n${details}\n\n▼評価画面はこちら\n${url}`;
-  MailApp.sendEmail(reporterEmail, mailSubject, body);
-}
-
-/**
- * 改善報告後に評価者へメール通知
- */
-function sendImprovementReportEmail_(evaluatorEmail, id, subject) {
-  if (!evaluatorEmail) { Logger.log('評価者メールアドレスが空のため、通知をスキップしました。'); return; }
-  const url = buildIncidentUrl(id);
-  const mailSubject = `[要対応] 改善報告が提出されました (ID: ${id})`;
-  const body = `評価担当者様\n\nID: ${id} の改善報告が提出されました。\n内容を確認し、最終評価を行ってください。\n\n件名: ${subject}\n\n▼評価画面はこちら\n${url}`;
-  MailApp.sendEmail(evaluatorEmail, mailSubject, body);
-}
-
-/**
- * 差し戻し時にメール通知を送信する
- */
-function sendRevertEmail_(notifyEmail, id, subject, message, reason) {
-  if (!notifyEmail) { Logger.log('通知先メールアドレスが空のため、差し戻し通知をスキップしました。'); return; }
-  const url = buildIncidentUrl(id);
-  const mailSubject = `[差し戻し] 対応が必要です (ID: ${id})`;
-  const body = `担当者様\n\n${message}\n\n件名: ${subject}\n差し戻し理由:\n${reason}\n\n▼評価画面はこちら\n${url}`;
-  MailApp.sendEmail(notifyEmail, mailSubject, body);
-}
-
-/**
- * 部署名からWebhook URLを取得する
- */
-function getDeptWebhookUrl_(deptName) {
-  if (!deptName) return null;
-  try {
-    const hooks = JSON.parse(DEPT_WEBHOOKS_JSON);
-    return hooks[deptName] || null;
-  } catch (e) { console.error('DEPT_WEBHOOKS_JSON のパースに失敗', e); return null; }
-}
-
-/**
- * Google Chatへ通知を送信する
- */
-function sendToChat_(webhookUrl, message) {
-  if (!webhookUrl || !message) return;
-  try {
-    UrlFetchApp.fetch(webhookUrl, { method: 'post', contentType: 'application/json; charset=UTF-8', payload: JSON.stringify({ text: message }),});
-  } catch (e) { console.error(`Chat通知に失敗: ${e.message}`); }
-}
-
-/**
- * スコアを更新する汎用関数
- */
-function updateScores_(data, colNames, dataKeys, modifiedColName) {
+function submitSecondaryEvaluation(data) {
   if (!data.id || data.id.includes('<') || data.id.includes('>')) throw new Error('無効なIDが指定されました。ページをリロードしてください。');
-  const { id } = data;
+  const { id, department, deadline, provisional_budget, secondary_eval_comment, hopeful_evaluator } = data;
+  if (!id || !department || !secondary_eval_comment) throw new Error('必須項目が入力されていません。');
   
-  const incidentRow = findSheetRowById_(id);
-  if (!incidentRow) throw new Error(`ID: ${id} が見つかりません。`);
-
-  const sheetUpdate = {};
-  sheetUpdate[colNames[0]] = data[dataKeys[0]];
-  sheetUpdate[colNames[1]] = data[dataKeys[1]];
-  sheetUpdate[colNames[2]] = data[dataKeys[2]];
-  if (modifiedColName) { sheetUpdate[modifiedColName] = new Date(); }
+  updateSheetRow_(id, { 
+    'ステータス': '改善報告中', // ★★★ ステータス名変更
+    '担当部署': department, 
+    '希望する評価者': hopeful_evaluator, 
+    '期限': deadline, 
+    '暫定予算': provisional_budget, 
+    '評価者によるコメント': secondary_eval_comment 
+  });
   
-  updateSheetRow_(id, sheetUpdate);
+  const incidentData = getIncidentById(id);
+  const webhookUrl = getDeptWebhookUrl_(department);
+  if (webhookUrl) { sendToChat_(webhookUrl, `[${id}] リスク評価が完了しました。\n所属：${incidentData.department}\n担当部署：${department}\n${buildIncidentUrl(id)}`); }
+  return `ID: ${id} のリスク評価を受け付けました。`;
+}
 
-  return 'スコアを更新しました。';
+/**
+ * 改善報告をWebアプリから受け取り処理する
+ */
+function submitImprovementReport(data) {
+  if (!data.id || data.id.includes('<') || data.id.includes('>')) throw new Error('無効なIDが指定されました。ページをリロードしてください。');
+  const { id, improvement_details, team_member_1, team_member_2, team_member_3, reference_url, ojt_completed, cost, effort, effect, ojt_id } = data;
+  if (!id || !improvement_details) throw new Error('改善内容の詳細は必須です。');
+
+  const incidentData = findSheetRowById_(id);
+  if (!incidentData) throw new Error(`ID: ${id} が見つかりません。`);
+  
+  const aiResult = runPostImprovementAI(id, improvement_details);
+  
+  const rCol = getSheetColumnName(incidentData.headers.indexOf('リスクの見積もり') + 1);
+  const aoCol = getSheetColumnName(incidentData.headers.indexOf('改善後のリスクの見積もり') + 1);
+  const reductionFormula = `=IF(AND(ISNUMBER(${rCol}${incidentData.rowNum}), ISNUMBER(${aoCol}${incidentData.rowNum})), ${rCol}${incidentData.rowNum}-${aoCol}${incidentData.rowNum}, "")`;
+  
+  const sheetUpdateData = {
+      'ステータス': '最終評価中', // ★★★ ステータス名変更
+      '改善担当部署': incidentData.values['所属'], 
+      '改善完了報告': improvement_details,
+      '報告者': team_member_1, '協力者1': team_member_2, '協力者2': team_member_3,
+      'URL': reference_url, 'OJT': ojt_completed === 'true', '費用': cost, '工数': effort, '効果': effect, 'OJTID': ojt_id,
+      'AI改善評価': aiResult.comment,
+      'リスク低減値': reductionFormula
+  };
+  updateSheetRow_(id, sheetUpdateData);
+  sendImprovementReportEmail_(incidentData.values['希望する評価者'], id, incidentData.values['件名']);
+
+  return `ID: ${id} の改善報告を受け付けました。`;
+}
+
+/**
+ * 最終評価をWebアプリから受け取り処理する
+ */
+function submitFinalEvaluation(data) {
+  if (!data.id || data.id.includes('<') || data.id.includes('>')) throw new Error('無効なIDが指定されました。ページをリロードしてください。');
+  const { id, final_eval_comment } = data;
+  if (!id || !final_eval_comment) throw new Error('最終評価コメントは必須です。');
+
+  updateSheetRow_(id, { 
+    'ステータス': '完了', // ★★★ ステータス名変更
+    '最終評価コメント': final_eval_comment, 
+    '最終通知日時': new Date() 
+  });
+  
+  const incidentData = getIncidentById(id);
+  const webhookUrl = getDeptWebhookUrl_(incidentData.department);
+  if (webhookUrl) { sendToChat_(webhookUrl, `[${id}] 最終評価が完了しました。\n最終レポート: ${buildIncidentReportUrl(id)}`); }
+
+  return `ID: ${id} の最終評価を受け付けました。`;
 }
 
 
-/** ユニークIDを生成 */
-function generateUniqueId_() {
-  const rand2Letters = () => Math.random().toString(36).substring(2, 4).toUpperCase();
-  const t = new Date();
-  return `${rand2Letters()}-${(t.getSeconds()*1000 + t.getMilliseconds()).toString().padStart(4,'0').slice(-4)}`;
+/**
+ * 二次評価スコアを更新する
+ */
+function updateSecondaryScores(data){
+  return updateScores_(data, 
+    ['頻度（二次評価）', '発生の可能性（二次評価）', '重篤度（二次評価）'],
+    ['frequency_2', 'likelihood_2', 'severity_2'],
+    '評価者による修正（二次）'
+  );
 }
 
-/** 評価画面のURLを生成 */
-function buildIncidentUrl(id){ return `${WEBAPP_BASE_URL || ScriptApp.getService().getUrl()}?id=${encodeURIComponent(id)}`; }
-/** レポート画面のURLを生成 */
-function buildIncidentReportUrl(id){ return `${WEBAPP_BASE_URL || ScriptApp.getService().getUrl()}?id=${encodeURIComponent(id)}&view=report`; }
-
-/** 列番号をA1形式の列文字に変換する */
-function getSheetColumnName(colIndex) {
-  let name = ''; let num = colIndex;
-  while (num > 0) { let remainder = (num - 1) % 26; name = String.fromCharCode(65 + remainder) + name; num = Math.floor((num - 1) / 26); }
-  return name;
+/**
+ * 改善後スコアを更新する
+ */
+function updatePostImproveScores(data) {
+  return updateScores_(data, 
+    ['頻度（改善評価）', '発生の可能性（改善後評価）', '重篤度（改善後評価）'],
+    ['post_frequency', 'post_likelihood', 'post_severity'],
+    '評価者による修正（最終）'
+  );
 }
 
-/** トークンログシートが存在することを確認し、なければ作成する */
-function ensureTokenSheet_() {
-  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-  let sh = ss.getSheetByName(TOKEN_SHEET_NAME);
-  if (!sh) { sh = ss.insertSheet(TOKEN_SHEET_NAME); sh.getRange(1,1,1,6).setValues([['日時','ID','PromptTokens','CandidateTokens','TotalTokens','関数']]); sh.setFrozenRows(1); }
-  return sh;
-}
+/**
+ * 差し戻し処理を実行する
+ */
+function revertStatus(data) {
+  const { id, targetStatus, reason } = data;
+  if (!id || !targetStatus || !reason) throw new Error('差し戻しにはID、対象ステータス、理由が必須です。');
 
-/** Gemini APIのトークン使用量をスプレッドシートに記録する */
-function logTokenUsage(insertId, promptTokens, candidateTokens, fnLabel) {
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(10000)) throw new Error('他の処理が実行中です。');
+  
   try {
-    const sh = ensureTokenSheet_();
-    sh.appendRow([ new Date(), insertId, promptTokens, candidateTokens, (promptTokens || 0) + (candidateTokens || 0), fnLabel ]);
-  } catch (e) { console.error(`Tokenログの書き込みに失敗: ${e.message}`); }
+    const incidentData = getIncidentById(id);
+    let notifyEmail = '';
+    let message = '';
+
+    // ★★★ ステータス名変更に対応
+    if (targetStatus === '改善報告中') { 
+      notifyEmail = incidentData.team_member_1;
+      message = `ID: ${id} の改善報告が差し戻されました。修正の上、再提出をお願いします。`;
+    } else if (targetStatus === '最終評価中') {
+      notifyEmail = incidentData.hopeful_evaluator;
+      message = `ID: ${id} の改善後評価が差し戻されました。再評価をお願いします。`;
+    } else {
+      throw new Error('このステータスへの差し戻しは定義されていません。');
+    }
+
+    updateSheetRow_(id, { 'ステータス': targetStatus });
+    sendRevertEmail_(notifyEmail, id, incidentData.subject, message, reason);
+    
+    return `ステータスを「${targetStatus}」に差し戻しました。`;
+  } finally {
+    lock.releaseLock();
+  }
 }
 

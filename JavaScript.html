@@ -1,6 +1,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const status = "<?= data.status ?>";
+    const uniqueId = "<?= data.unique_id ?>";
 
     // Event Listeners
     setupFormSubmission('form-correct-secondary', 'updateSecondaryScores');
@@ -13,7 +14,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const reportBtn = document.getElementById('report-button');
     if (reportBtn) {
         reportBtn.addEventListener('click', () => {
-            const reportUrl = "<?= buildIncidentReportUrl(data.unique_id) ?>";
+            if (reportBtn.disabled) return;
+            const reportUrl = "<?= buildIncidentReportUrl(uniqueId) ?>";
             window.open(reportUrl, '_blank');
         });
     }
@@ -30,10 +32,15 @@ function setFormBusyState(form, isBusy) {
 
 function showInlineMessage(form, message, type) {
     let msgBox = form.querySelector('.inline-msg');
+    const buttonRow = form.querySelector('.button-row');
     if (!msgBox) {
         msgBox = document.createElement('div');
-        msgBox.className = `inline-msg ${type}`;
-        form.appendChild(msgBox);
+        msgBox.className = 'inline-msg';
+        if(buttonRow) {
+            form.insertBefore(msgBox, buttonRow);
+        } else {
+            form.appendChild(msgBox);
+        }
     }
     msgBox.textContent = message;
     msgBox.className = `inline-msg ${type}`;
@@ -54,8 +61,6 @@ function setupFormSubmission(formId, functionName) {
             .withSuccessHandler(response => {
                 setFormBusyState(form, false);
                 showInlineMessage(form, response, 'success');
-                // Auto-reload is disabled to prevent blank screen issues.
-                // setTimeout(() => window.location.reload(), 1500);
             })
             .withFailureHandler(error => {
                 setFormBusyState(form, false);
@@ -67,6 +72,7 @@ function setupFormSubmission(formId, functionName) {
 
 function setupModal() {
     const modal = document.getElementById('revert-modal');
+    if (!modal) return;
     const revertButtons = document.querySelectorAll('.revert-button');
     const cancelBtn = document.getElementById('cancel-revert');
     const revertForm = document.getElementById('revert-form');
@@ -88,24 +94,27 @@ function setupModal() {
     });
 }
 
-
 function updateWorkflowUI(status) {
     const riskEvalCard = document.getElementById('card-risk-evaluation');
     const improvementCard = document.getElementById('card-improvement-report');
     const finalEvalCard = document.getElementById('card-final-evaluation');
+    const reportButton = document.getElementById('report-button');
 
-    // Disable all cards by default, then enable the current one.
-    [riskEvalCard, improvementCard, finalEvalCard].forEach(c => c.classList.add('disabled'));
+    [riskEvalCard, improvementCard, finalEvalCard].forEach(c => {
+        if (c) c.classList.add('disabled');
+    });
 
-    if (status === '二次評価待ち') {
-        riskEvalCard.classList.remove('disabled');
-    } else if (status === '二次評価完了' || status === '改善報告済') {
-        improvementCard.classList.remove('disabled');
+    if (status === 'リスク評価中') {
+        if (riskEvalCard) riskEvalCard.classList.remove('disabled');
+    } else if (status === '改善報告中') {
+        if (improvementCard) improvementCard.classList.remove('disabled');
+    } else if (status === '最終評価中') {
+        if (improvementCard) improvementCard.classList.remove('disabled');
+        if (finalEvalCard) finalEvalCard.classList.remove('disabled');
     }
-    
-    // The final evaluation card is enabled only when an improvement report is submitted.
-    if (status === '改善報告済') {
-        finalEvalCard.classList.remove('disabled');
+
+    if (reportButton) {
+        reportButton.disabled = (status !== '完了');
     }
 }
 </script>
