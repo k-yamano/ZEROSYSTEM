@@ -1,0 +1,112 @@
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const status = "<?= data.status ?>";
+
+    // Event Listeners
+    setupFormSubmission('form-correct-secondary', 'updateSecondaryScores');
+    setupFormSubmission('form-secondary-eval', 'submitSecondaryEvaluation');
+    setupFormSubmission('form-improvement-report', 'submitImprovementReport');
+    setupFormSubmission('form-correct-post', 'updatePostImproveScores');
+    setupFormSubmission('form-final-eval', 'submitFinalEvaluation');
+    setupFormSubmission('revert-form', 'revertStatus');
+    
+    const reportBtn = document.getElementById('report-button');
+    if (reportBtn) {
+        reportBtn.addEventListener('click', () => {
+            const reportUrl = "<?= buildIncidentReportUrl(data.unique_id) ?>";
+            window.open(reportUrl, '_blank');
+        });
+    }
+
+    setupModal();
+    updateWorkflowUI(status);
+});
+
+function setFormBusyState(form, isBusy) {
+    const elements = form.querySelectorAll('input, select, textarea, button');
+    elements.forEach(el => el.disabled = isBusy);
+    form.style.opacity = isBusy ? 0.7 : 1;
+}
+
+function showInlineMessage(form, message, type) {
+    let msgBox = form.querySelector('.inline-msg');
+    if (!msgBox) {
+        msgBox = document.createElement('div');
+        msgBox.className = `inline-msg ${type}`;
+        form.appendChild(msgBox);
+    }
+    msgBox.textContent = message;
+    msgBox.className = `inline-msg ${type}`;
+}
+
+function setupFormSubmission(formId, functionName) {
+    const form = document.getElementById(formId);
+    if (!form) return;
+
+    form.addEventListener('submit', function(event) {
+        event.preventDefault();
+        const data = Object.fromEntries(new FormData(form).entries());
+        
+        setFormBusyState(form, true);
+        showInlineMessage(form, '送信中...', 'info');
+
+        google.script.run
+            .withSuccessHandler(response => {
+                setFormBusyState(form, false);
+                showInlineMessage(form, response, 'success');
+                // Auto-reload is disabled to prevent blank screen issues.
+                // setTimeout(() => window.location.reload(), 1500);
+            })
+            .withFailureHandler(error => {
+                setFormBusyState(form, false);
+                showInlineMessage(form, error.message, 'error');
+            })
+            [functionName](data);
+    });
+}
+
+function setupModal() {
+    const modal = document.getElementById('revert-modal');
+    const revertButtons = document.querySelectorAll('.revert-button');
+    const cancelBtn = document.getElementById('cancel-revert');
+    const revertForm = document.getElementById('revert-form');
+
+    revertButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const targetStatus = this.dataset.targetStatus;
+            revertForm.querySelector('[name="targetStatus"]').value = targetStatus;
+            modal.style.display = 'block';
+        });
+    });
+
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', () => modal.style.display = 'none');
+    }
+    
+    window.addEventListener('click', event => {
+        if (event.target === modal) modal.style.display = 'none';
+    });
+}
+
+
+function updateWorkflowUI(status) {
+    const riskEvalCard = document.getElementById('card-risk-evaluation');
+    const improvementCard = document.getElementById('card-improvement-report');
+    const finalEvalCard = document.getElementById('card-final-evaluation');
+
+    // Disable all cards by default, then enable the current one.
+    [riskEvalCard, improvementCard, finalEvalCard].forEach(c => c.classList.add('disabled'));
+
+    if (status === '二次評価待ち') {
+        riskEvalCard.classList.remove('disabled');
+    } else if (status === '二次評価完了' || status === '改善報告済') {
+        improvementCard.classList.remove('disabled');
+    }
+    
+    // The final evaluation card is enabled only when an improvement report is submitted.
+    if (status === '改善報告済') {
+        finalEvalCard.classList.remove('disabled');
+    }
+}
+</script>
+

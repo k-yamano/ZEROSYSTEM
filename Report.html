@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>リスクアセスメントレポート - <?= data.unique_id ?></title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <?!= include('Stylesheet'); ?>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>リスクアセスメントレポート</h1>
+      <button id="print-button" class="report-button">印刷</button>
+    </header>
+    
+    <div class="card">
+      <h2>基本情報</h2>
+      <div class="kv">
+          <dt>ID</dt><dd><?= data.unique_id ?></dd>
+          <dt>ステータス</dt><dd><?= data.status ?></dd>
+          <dt>発見日時</dt><dd><?= Utilities.formatDate(new Date(data.timestamp), 'JST', 'yyyy/MM/dd HH:mm') ?></dd>
+          <dt>件名</dt><dd><?= data.subject ?></dd>
+          <dt>評価者</dt><dd><?= data.hopeful_evaluator ?></dd>
+          <dt>報告者</dt><dd><?= data.team_member_1 || data.reporter ?></dd>
+          <dt>改善担当部署</dt><dd><?= data.improvement_department || '---' ?></dd>
+          <dt>内容</dt><dd><div class="prewrap"><?= data.details ?></div></dd>
+      </div>
+       <h2 class="subtitle">スコアサマリー</h2>
+      <table class="score-summary-table">
+        <thead><tr><th>評価項目</th><th class="tc">頻度</th><th class="tc">可能性</th><th class="tc">重篤度</th><th class="tc">リスク値</th><th>優先度</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>二次評価</td>
+            <td class="tc"><?= data.frequency_2 ?></td><td class="tc"><?= data.likelihood_2 ?></td><td class="tc"><?= data.severity_2 ?></td>
+            <td class="tc score"><?= data.risk_score ?></td><td><?= data.priority ?></td>
+          </tr>
+          <tr>
+            <td>改善後評価</td>
+            <td class="tc"><?= data.post_frequency || '-' ?></td><td class="tc"><?= data.post_likelihood || '-' ?></td><td class="tc"><?= data.post_severity || '-' ?></td>
+            <td class="tc score"><?= data.post_risk || '-' ?></td><td><?= data.post_priority || '-' ?></td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="risk-reduction-label">リスク低減値</div>
+      <div class="risk-reduction-value"><?= data.risk_reduction_value !== '' ? data.risk_reduction_value : '---' ?></div>
+    </div>
+    
+    <div class="card">
+      <h2>評価と改善の詳細</h2>
+      <div class="kv">
+        <dt>一次評価理由 (AI)</dt><dd class="prewrap"><?= data.evaluation_reason ?></dd>
+        <dt>改善プラン (AI)</dt><dd class="prewrap"><?= data.improvement_plan_ai ?></dd>
+        <dt>二次評価コメント</dt><dd class="prewrap"><?= data.secondary_eval_comment || '---' ?></dd>
+        <hr class="hr-style">
+        <dt>改善内容</dt><dd class="prewrap"><?= data.improvement_details || '---' ?></dd>
+        <dt>チームメンバー</dt><dd><?= [data.team_member_1, data.team_member_2, data.team_member_3, data.team_member_4, data.team_member_5].filter(Boolean).join(', ') || '---' ?></dd>
+        <dt>参考URL</dt><dd><? var url = data.reference_url; if (url) { ?><a href="<?= url ?>" target="_blank" rel="noopener"><?= url ?></a><? } else { ?>---<? } ?></dd>
+         <dt>費用</dt><dd><?= data.cost || '---' ?></dd>
+         <dt>工数</dt><dd><?= data.effort || '---' ?></dd>
+         <dt>効果</dt><dd><?= data.effect || '---' ?></dd>
+        <dt>改善後AI講評</dt><dd class="prewrap"><?= data.improvement_ai_comment || '---' ?></dd>
+        <hr class="hr-style">
+        <dt>最終評価コメント</dt><dd class="prewrap"><?= data.final_eval_comment || '---' ?></dd>
+      </div>
+    </div>
+  </div>
+  <script>
+    document.getElementById('print-button').addEventListener('click', () => window.print());
+  </script>
+</body>
+</html>
+
