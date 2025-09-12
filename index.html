@@ -8,7 +8,6 @@
 </head>
 <body>
   <div class="container">
-    <!-- Header -->
     <header class="header">
       <div class="header-main">
         <h1>リスクアセスメント</h1>
@@ -26,7 +25,6 @@
       <div class="card"><p>IDが指定されていないか、データが見つかりませんでした。</p></div>
     <? return; } ?>
 
-    <!-- Basic Information & Score Summary -->
     <div class="card">
       <h2 class="card-title">📋 基本情報</h2>
       <div class="info-grid">
@@ -62,7 +60,6 @@
       </table>
     </div>
 
-    <!-- Risk Evaluation -->
     <div id="card-risk-evaluation" class="card">
       <h2 class="card-title">
         🔍 リスク評価
@@ -103,7 +100,6 @@
       </form>
     </div>
 
-    <!-- Improvement Report -->
     <div id="card-improvement-report" class="card">
       <h2 class="card-title">🔧 改善報告</h2>
       <form id="form-improvement-report">
@@ -116,18 +112,16 @@
           <div class="form-group"><label class="form-label">工数</label><input type="text" name="effort" class="form-input" value="<?= data.effort || '' ?>"></div>
           <div class="form-group"><label class="form-label">効果</label><input type="text" name="effect" class="form-input" value="<?= data.effect || '' ?>"></div>
         </div>
-        <div class="form-group">
+        <div class="form-group ojt-section">
           <label class="form-label">OJT登録</label>
-          <div class="ojt-section">
-              <a href="https://script.google.com/a/macros/shabon.com/s/AKfycbz_4dkEmkyCndlrYdUUuqgzrioddSJ0givqmuh-LTviiD9wIV_jrgEIbqB5dycm6kem7A/exec" target="_blank" class="btn btn-secondary">登録</a>
-              <input type="text" name="ojt_id" class="form-input" placeholder="OJT ID (必須)" value="<?= data.ojt_id || '' ?>" required>
-              <div class="toggle-group">
-                <label class="toggle-switch">
-                    <input type="checkbox" id="ojt-toggle" name="ojt_completed" value="true" <? if (data.ojt_completed) { ?>checked<? } ?>>
-                    <span class="slider"></span>
-                </label>
-                <label for="ojt-toggle" class="toggle-text-label">OJT実施済 (必須)</label>
-              </div>
+          <a href="https://script.google.com/a/macros/shabon.com/s/AKfycbz_4dkEmkyCndlrYdUUuqgzrioddSJ0givqmuh-LTviiD9wIV_jrgEIbqB5dycm6kem7A/exec" target="_blank" class="btn btn-secondary">登録</a>
+          <input type="text" name="ojt_id" class="form-input" placeholder="OJT ID (必須)" value="<?= data.ojt_id || '' ?>" required>
+          <div class="toggle-group">
+            <label class="toggle-switch">
+                <input type="checkbox" id="ojt-toggle" name="ojt_completed" value="true" <? if (data.ojt_completed) { ?>checked<? } ?>>
+                <span class="slider"></span>
+            </label>
+            <label for="ojt-toggle" class="toggle-text-label">OJT実施済 (必須)</label>
           </div>
         </div>
         <div class="button-row">
@@ -137,7 +131,6 @@
       </form>
     </div>
 
-    <!-- Final Evaluation -->
     <div id="card-final-evaluation" class="card">
       <h2 class="card-title">
         ✅ 最終評価
@@ -169,7 +162,6 @@
     </div>
   </div>
 
-  <!-- Modal for Revert Reason -->
   <div id="revert-modal" class="modal">
     <div class="modal-content">
       <h2 style="margin-bottom: 1.5rem;">差し戻し理由</h2>

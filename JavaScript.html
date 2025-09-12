@@ -100,22 +100,24 @@ function updateWorkflowUI(status) {
     const finalEvalCard = document.getElementById('card-final-evaluation');
     const reportButton = document.getElementById('report-button');
 
+    // ▼▼▼ 変更箇所 ▼▼▼
+    // 全てのカードを一旦非表示にする
     [riskEvalCard, improvementCard, finalEvalCard].forEach(c => {
         if (c) c.classList.add('disabled');
     });
 
+    // ステータスに応じて、編集可能なカードを有効化する
     if (status === 'リスク評価中') {
         if (riskEvalCard) riskEvalCard.classList.remove('disabled');
     } else if (status === '改善報告中') {
         if (improvementCard) improvementCard.classList.remove('disabled');
     } else if (status === '最終評価中') {
-        if (improvementCard) improvementCard.classList.remove('disabled');
         if (finalEvalCard) finalEvalCard.classList.remove('disabled');
     }
+    // ▲▲▲ 変更箇所 ▲▲▲
 
     if (reportButton) {
         reportButton.disabled = (status !== '完了');
     }
 }
 </script>
-
