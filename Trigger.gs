@@ -1,66 +1,73 @@
-/**
- * Googleフォームからの投稿をスプレッドシートのトリガーで実行
- * @param {Object} e イベントオブジェクト
- */
-function onFormSubmitTrigger(e){
-  if (!e) return;
-
+/** フォーム送信時に実行されるメインの処理 */
+function onFormSubmit(e) {
+  if (!e || !e.range) return;
   const lock = LockService.getDocumentLock();
   if (!lock.tryLock(30000)) return;
 
   try {
-    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-    const sh = ss.getSheetByName(SHEET_NAME);
-    const headers = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0];
-    
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
+    const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
     const row = e.range.getRow();
-    const idCol = headers.indexOf('ID') + 1;
-    if (idCol <= 0) throw new Error('ID 列が見つかりません');
+    const idCol = headers.indexOf('ID');
+    if (idCol !== -1 && sheet.getRange(row, idCol + 1).getValue()) return;
 
-    const existingId = String(sh.getRange(row, idCol).getValue() || '').trim();
-    if (existingId) {
-      Logger.log(`skip: row ${row} already processed (ID=${existingId})`);
-      return;
+    setFormulas(sheet, row, headers);
+
+    const formValues = e.namedValues;
+    const subject = formValues['件名']?.[0] || '';
+    const details = formValues['ヒヤリハット内容']?.[0] || '';
+    const id = newId();
+    const ai = evalNewIncident(id, subject, details);
+    
+    const data = { 'ID': id, 'ステータス': 'リスク評価中', 'レポート': `${WEBAPP_BASE_URL}?id=${id}&view=report` };
+    if (ai && !ai.error) {
+      Object.assign(data, {
+        '頻度（AI評価）': ai?.scores?.frequency || 1,
+        '発生の可能性（AI評価）': ai?.scores?.likelihood || 1,
+        '重篤度（AI評価）': ai?.scores?.severity || 1,
+        '評価理由': ai.reason || "評価理由の取得失敗",
+        '改善プラン': ai.plan || "改善プランの取得失敗",
+        '事故の型分類（AI評価）': ai.accident_type || "分類取得失敗",
+        '起因物（AI評価）': ai.causal_agent || "起因物取得失敗"
+      });
+    } else {
+      Object.assign(data, {
+        '評価理由': `AI評価エラー: ${ai?.error || '不明'}`, '事故の型分類（AI評価）': 'AI評価エラー', '起因物（AI評価）': 'AI評価エラー'
+      });
     }
+    updateRowById(id, data, row);
 
-    const nv = {};
-    for (const k in e.namedValues) nv[k] = e.namedValues[k][0];
+    const submitter = formValues['メールアドレス']?.[0];
+    const evaluator = formValues['希望する評価者']?.[0];
+    const department = formValues['所属']?.[0];
+    if (submitter) notifySubmitter(submitter, id, subject);
+    if (evaluator && !ai.error) notifyEvaluator(evaluator, department, id, subject);
 
-    const id = generateUniqueId_();
-    const ai = runInitialAI(id, nv['件名'], nv['ヒヤリハット内容']);
-
-    const oCol = getSheetColumnName(headers.indexOf('頻度（二次評価）') + 1);
-    const pCol = getSheetColumnName(headers.indexOf('発生の可能性（二次評価）') + 1);
-    const qCol = getSheetColumnName(headers.indexOf('重篤度（二次評価）') + 1);
-    const rCol = getSheetColumnName(headers.indexOf('リスクの見積もり') + 1);
-
-    const riskFormula = oCol && pCol && qCol ? `=SUM(${oCol}${row}, ${pCol}${row}, ${qCol}${row})` : '数式エラー';
-    const priorityFormula = rCol ? `=IF(${rCol}${row}>=15, "高", IF(${rCol}${row}>=8, "中", "低"))` : '数式エラー';
-
-    const write = {
-      'ID': id,
-      'レポート': buildIncidentReportUrl(id),
-      'ステータス': 'リスク評価中', // ★★★ ステータス名変更
-      '評価理由': ai.reason,
-      '改善プラン': ai.plan,
-      '頻度（二次評価）': ai.scores.frequency,
-      '発生の可能性（二次評価）': ai.scores.likelihood,
-      '重篤度（二次評価）': ai.scores.severity,
-      '事故の型分類': ai.accident_type,
-      '起因物（二次評価）': ai.causal_agent,
-      'リスクの見積もり': riskFormula,
-      '優先順位': priorityFormula,
-    };
-
-    headers.forEach((h, i) => {
-      if (h in write) sh.getRange(row, i + 1).setValue(write[h]);
-    });
-
-    sendInitialEmail_(nv['所属'], nv['メールアドレス'], id, nv['件名'], nv['ヒヤリハット内容']);
-
-    Logger.log(`processed row=${row}, id=${id}`);
+  } catch (err) {
+    Logger.log(`onFormSubmit error: ${err.message}\n${err.stack}`);
   } finally {
     lock.releaseLock();
   }
 }
 
+/** 指定された行に数式を設定する */
+function setFormulas(sheet, row, headers) {
+  const riskTargetCol = headers.indexOf('リスクの見積もり（AI評価）') + 1;
+  const pCol = headers.indexOf('頻度（AI評価）') + 1;
+  const qCol = headers.indexOf('発生の可能性（AI評価）') + 1;
+  const rCol = headers.indexOf('重篤度（AI評価）') + 1;
+  const priorityCol = headers.indexOf('優先順位') + 1;
+
+  if (riskTargetCol > 0 && pCol > 0 && qCol > 0 && rCol > 0) {
+    const startCell = sheet.getRange(row, pCol).getA1Notation();
+    const endCell = sheet.getRange(row, rCol).getA1Notation();
+    sheet.getRange(row, riskTargetCol).setFormula(`=SUM(${startCell}:${endCell})`);
+
+    if (priorityCol > 0) {
+      const riskCell = sheet.getRange(row, riskTargetCol).getA1Notation();
+      sheet.getRange(row, priorityCol).setFormula(`=IF(${riskCell}>=15, "高", IF(${riskCell}>=8, "中", "低"))`);
+    }
+  } else {
+      Logger.log("数式の設定に必要な列が見つかりませんでした。");
+  }
+}

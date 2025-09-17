@@ -1,0 +1,12 @@
+# 1) リポジトリへ移動
+cd ~/github/ZEROSYSTEM
+
+# 2) 変更の確認（任意）
+git status
+git diff --name-only
+
+# 3) 変更をコミット（今回は追跡済みファイルの修正なので -am が早い）
+git commit -am "ui: layout/style updates (JavaScript.html, Stylesheet.html, index.html)"
+
+# 4) GitHubへプッシュ（main ブランチ）
+git push

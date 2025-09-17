@@ -1,123 +1,103 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const status = "<?= data.status ?>";
-    const uniqueId = "<?= data.unique_id ?>";
+    setupForms();
+    setupModal();
+    updateUI(status);
+});
 
-    // Event Listeners
-    setupFormSubmission('form-correct-secondary', 'updateSecondaryScores');
-    setupFormSubmission('form-secondary-eval', 'submitSecondaryEvaluation');
-    setupFormSubmission('form-improvement-report', 'submitImprovementReport');
-    setupFormSubmission('form-correct-post', 'updatePostImproveScores');
-    setupFormSubmission('form-final-eval', 'submitFinalEvaluation');
-    setupFormSubmission('revert-form', 'revertStatus');
+function setupForms() {
+    listen('form-correct-ai', 'updateScores');
+    listen('form-secondary-eval', 'submitEval');
+    listen('form-improvement-report', 'submitImprovement');
+    listen('form-correct-post', 'updateScores');
+    listen('form-final-eval', 'submitFinal');
+    listen('revert-form', 'revert');
     
     const reportBtn = document.getElementById('report-button');
     if (reportBtn) {
         reportBtn.addEventListener('click', () => {
-            if (reportBtn.disabled) return;
-            const reportUrl = "<?= buildIncidentReportUrl(uniqueId) ?>";
+            const reportUrl = "<?= WEBAPP_BASE_URL ?>?id=<?= data.unique_id ?>&view=report";
             window.open(reportUrl, '_blank');
         });
     }
+}
 
-    setupModal();
-    updateWorkflowUI(status);
-});
+function listen(formId, action) {
+    const form = document.getElementById(formId);
+    if (!form) return;
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const data = Object.fromEntries(new FormData(form).entries());
+        setBusy(form, true);
+        showMsg(form, '送信中...', 'info');
+        google.script.run
+            .withSuccessHandler(res => {
+                showMsg(form, res, 'success');
+                if (form.id !== 'revert-form') {
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    document.getElementById('revert-modal').style.display = 'none';
+                    setTimeout(() => location.reload(), 1000);
+                }
+            })
+            .withFailureHandler(err => {
+                setBusy(form, false);
+                showMsg(form, err.message, 'error');
+            })
+            .serverAction(action, data);
+    });
+}
 
-function setFormBusyState(form, isBusy) {
-    const elements = form.querySelectorAll('input, select, textarea, button');
-    elements.forEach(el => el.disabled = isBusy);
+function setBusy(form, isBusy) {
+    form.querySelectorAll('input, select, textarea, button').forEach(el => el.disabled = isBusy);
     form.style.opacity = isBusy ? 0.7 : 1;
 }
 
-function showInlineMessage(form, message, type) {
+function showMsg(form, message, type) {
     let msgBox = form.querySelector('.inline-msg');
-    const buttonRow = form.querySelector('.button-row');
     if (!msgBox) {
         msgBox = document.createElement('div');
-        msgBox.className = 'inline-msg';
-        if(buttonRow) {
-            form.insertBefore(msgBox, buttonRow);
-        } else {
-            form.appendChild(msgBox);
-        }
+        form.prepend(msgBox);
     }
-    msgBox.textContent = message;
     msgBox.className = `inline-msg ${type}`;
-}
-
-function setupFormSubmission(formId, functionName) {
-    const form = document.getElementById(formId);
-    if (!form) return;
-
-    form.addEventListener('submit', function(event) {
-        event.preventDefault();
-        const data = Object.fromEntries(new FormData(form).entries());
-        
-        setFormBusyState(form, true);
-        showInlineMessage(form, '送信中...', 'info');
-
-        google.script.run
-            .withSuccessHandler(response => {
-                setFormBusyState(form, false);
-                showInlineMessage(form, response, 'success');
-            })
-            .withFailureHandler(error => {
-                setFormBusyState(form, false);
-                showInlineMessage(form, error.message, 'error');
-            })
-            [functionName](data);
-    });
+    msgBox.textContent = message;
 }
 
 function setupModal() {
     const modal = document.getElementById('revert-modal');
     if (!modal) return;
-    const revertButtons = document.querySelectorAll('.revert-button');
-    const cancelBtn = document.getElementById('cancel-revert');
-    const revertForm = document.getElementById('revert-form');
-
-    revertButtons.forEach(btn => {
+    document.querySelectorAll('.revert-button').forEach(btn => {
         btn.addEventListener('click', function() {
-            const targetStatus = this.dataset.targetStatus;
-            revertForm.querySelector('[name="targetStatus"]').value = targetStatus;
+            modal.querySelector('[name="targetStatus"]').value = this.dataset.targetStatus;
             modal.style.display = 'block';
         });
     });
-
-    if (cancelBtn) {
-        cancelBtn.addEventListener('click', () => modal.style.display = 'none');
-    }
-    
-    window.addEventListener('click', event => {
-        if (event.target === modal) modal.style.display = 'none';
-    });
+    document.getElementById('cancel-revert')?.addEventListener('click', () => modal.style.display = 'none');
+    window.addEventListener('click', e => { if (e.target === modal) modal.style.display = 'none'; });
 }
 
-function updateWorkflowUI(status) {
-    const riskEvalCard = document.getElementById('card-risk-evaluation');
-    const improvementCard = document.getElementById('card-improvement-report');
-    const finalEvalCard = document.getElementById('card-final-evaluation');
-    const reportButton = document.getElementById('report-button');
-
-    // ▼▼▼ 変更箇所 ▼▼▼
-    // 全てのカードを一旦非表示にする
-    [riskEvalCard, improvementCard, finalEvalCard].forEach(c => {
-        if (c) c.classList.add('disabled');
+/** ★★★ UIの編集可否を制御する関数 (修正版) ★★★ */
+function updateUI(status) {
+    const allCards = document.querySelectorAll('.card[id]');
+    allCards.forEach(card => {
+        card.classList.add('disabled');
+        card.querySelectorAll('input, select, textarea, button').forEach(el => el.disabled = true);
     });
 
-    // ステータスに応じて、編集可能なカードを有効化する
-    if (status === 'リスク評価中') {
-        if (riskEvalCard) riskEvalCard.classList.remove('disabled');
-    } else if (status === '改善報告中') {
-        if (improvementCard) improvementCard.classList.remove('disabled');
-    } else if (status === '最終評価中') {
-        if (finalEvalCard) finalEvalCard.classList.remove('disabled');
-    }
-    // ▲▲▲ 変更箇所 ▲▲▲
+    const activeCardIdMap = {
+        'リスク評価中': 'card-risk-evaluation',
+        '改善報告中': 'card-improvement-report',
+        '最終評価中': 'card-final-evaluation',
+    };
 
-    if (reportButton) {
-        reportButton.disabled = (status !== '完了');
+    const activeCardId = activeCardIdMap[status];
+    if (activeCardId) {
+        const activeCard = document.getElementById(activeCardId);
+        if (activeCard) {
+            activeCard.classList.remove('disabled');
+            activeCard.querySelectorAll('input, select, textarea, button').forEach(el => el.disabled = false);
+        }
     }
 }
 </script>

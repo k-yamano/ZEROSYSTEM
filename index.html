@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <title>リスクアセスメント UI</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <?!= include('CSS'); ?>
+  <?!= include('Stylesheet'); ?>
 </head>
 <body>
   <div class="container">
@@ -26,157 +26,123 @@
     <? return; } ?>
 
     <div class="card">
-      <h2 class="card-title">📋 基本情報</h2>
-      <div class="info-grid">
-        <span class="info-label">発見日時</span><span class="info-value"><?= Utilities.formatDate(new Date(data.timestamp), 'JST', 'yyyy/MM/dd HH:mm') ?></span>
-        <span class="info-label">発見者</span><span class="info-value"><?= data.discoverer_email ?></span>
-        <span class="info-label">件名</span><span class="info-value"><?= data.subject ?></span>
-        <span class="info-label">報告者</span><span class="info-value"><?= data.team_member_1 || data.reporter ?></span>
-        <span class="info-label">改善担当部署</span><span class="info-value"><?= data.improvement_department || '---' ?></span>
-        <span class="info-label">内容</span><span class="info-value"><?= data.details ?></span>
-      </div>
-
-      <h3 class="card-title" style="margin-top: 2rem;">📊 スコアサマリー</h3>
+       <h2 class="card-title">📋 基本情報</h2>
+       <div class="info-grid">
+         <span class="info-label">発見日時</span><span class="info-value"><?= formatDate(data.timestamp) ?></span>
+         <span class="info-label">発見者</span><span class="info-value"><?= data.discoverer_email ?></span>
+         <span class="info-label">件名</span><span class="info-value"><?= data.subject ?></span>
+         <span class="info-label">内容</span><span class="info-value" style="white-space: pre-wrap;"><?= data.details ?></span>
+       </div>
+       <h3 class="card-title" style="margin-top: 2rem;">📊 スコアサマリー</h3>
       <table class="score-table">
         <thead>
           <tr><th>評価項目</th><th>頻度</th><th>可能性</th><th>重篤度</th><th>リスク値</th><th>優先度</th></tr>
         </thead>
         <tbody>
           <tr>
-            <td><strong>リスク評価</strong></td>
-            <td class="tc"><?= data.frequency_2 ?></td><td class="tc"><?= data.likelihood_2 ?></td><td class="tc"><?= data.severity_2 ?></td>
-            <td class="tc score-value"><?= data.risk_score ?></td><td><span class="priority-badge <?= data.priority ?>"><?= data.priority ?></span></td>
+            <td><strong>AI評価</strong></td>
+            <td class="tc"><?= data.frequency_ai ?></td><td class="tc"><?= data.likelihood_ai ?></td><td class="tc"><?= data.severity_ai ?></td>
+            <td class="tc score-value"><?= data.risk_score_ai ?></td><td><span class="priority-badge <?= data.priority ?>"><?= data.priority ?></span></td>
           </tr>
           <tr>
             <td><strong>改善後評価</strong></td>
             <td class="tc"><?= data.post_frequency || '-' ?></td><td class="tc"><?= data.post_likelihood || '-' ?></td><td class="tc"><?= data.post_severity || '-' ?></td>
             <td class="tc score-value"><?= data.post_risk || '-' ?></td><td><span class="priority-badge <?= data.post_priority ?>"><?= data.post_priority || '-' ?></span></td>
           </tr>
-          <tr>
-            <td colspan="5" class="risk-reduction-label">リスク低減値</td>
-            <td class="tc risk-reduction-value"><?= data.risk_reduction_value !== '' ? data.risk_reduction_value : '---' ?></td>
-          </tr>
         </tbody>
       </table>
     </div>
 
     <div id="card-risk-evaluation" class="card">
-      <h2 class="card-title">
-        🔍 リスク評価
-        <? if (data.modified_by_evaluator_secondary) { ?><span class="badge">修正あり</span><? } ?>
-      </h2>
+      <h2 class="card-title">🔍 リスク評価</h2>
+      
       <div class="ai-card">
-        <h3 class="ai-card-title">🤖 AIによる評価内容</h3>
+        <h3 class="ai-card-title">🤖 AIによる初期評価</h3>
         <div class="info-grid">
-          <span class="info-label">評価理由</span><span class="info-value"><?= data.evaluation_reason ?></span>
-          <span class="info-label">改善プラン</span><span class="info-value"><?= data.improvement_plan_ai ?></span>
+          <span class="info-label">事故の型分類</span><span class="info-value"><?= data.accident_type_ai ?></span>
+          <span class="info-label">起因物</span><span class="info-value"><?= data.causal_agent_ai ?></span>
+          <span class="info-label">評価理由</span><span class="info-value" style="white-space: pre-wrap;"><?= data.evaluation_reason ?></span>
+          <span class="info-label">改善プラン案</span><span class="info-value" style="white-space: pre-wrap;"><?= data.improvement_plan_ai ?></span>
         </div>
       </div>
+      
       <div class="score-correction">
-        <h4>一次評価スコア（AI判定）</h4>
-        <form id="form-correct-secondary" class="score-form">
-          <input type="hidden" name="id" value="<?= data.unique_id ?>">
-          <div class="form-group"><label class="form-label">頻度</label><select name="frequency_2" class="form-input"><? for(const val of [1,2,4]) { ?><option value="<?= val ?>" <?= data.frequency_2 == val ? 'selected' : '' ?>><?= val ?></option><? } ?></select></div>
-          <div class="form-group"><label class="form-label">可能性</label><select name="likelihood_2" class="form-input"><? for(const val of [1,2,4,6]) { ?><option value="<?= val ?>" <?= data.likelihood_2 == val ? 'selected' : '' ?>><?= val ?></option><? } ?></select></div>
-          <div class="form-group"><label class="form-label">重篤度</label><select name="severity_2" class="form-input"><? for(const val of [1,3,6,10]) { ?><option value="<?= val ?>" <?= data.severity_2 == val ? 'selected' : '' ?>><?= val ?></option><? } ?></select></div>
-          <button type="submit" class="btn">修正</button>
+        <h4>AI評価スコア修正</h4>
+        <form id="form-correct-ai" class="score-form">
+            <input type="hidden" name="id" value="<?= data.unique_id ?>">
+            <input type="hidden" name="type" value="ai">
+            <div class="form-group"><label>頻度</label><select name="frequency_ai" class="form-input"><? for(const val of [1,2,4]) { ?><option value="<?= val ?>" <?= data.frequency_ai == val ? 'selected' : '' ?>><?= val ?></option><? } ?></select></div>
+            <div class="form-group"><label>可能性</label><select name="likelihood_ai" class="form-input"><? for(const val of [1,2,4,6]) { ?><option value="<?= val ?>" <?= data.likelihood_ai == val ? 'selected' : '' ?>><?= val ?></option><? } ?></select></div>
+            <div class="form-group"><label>重篤度</label><select name="severity_ai" class="form-input"><? for(const val of [1,3,6,10]) { ?><option value="<?= val ?>" <?= data.severity_ai == val ? 'selected' : '' ?>><?= val ?></option><? } ?></select></div>
+            <button type="submit" class="btn">修正</button>
         </form>
       </div>
+
       <form id="form-secondary-eval">
         <input type="hidden" name="id" value="<?= data.unique_id ?>">
         <div class="evaluator-grid">
-            <div class="form-group evaluator-field">
-              <label class="form-label" for="hopeful_evaluator">評価者 <small>（※代理の場合はアドレスを書き換えてください）</small></label>
-              <input type="email" id="hopeful_evaluator" name="hopeful_evaluator" class="form-input" value="<?= data.hopeful_evaluator || '' ?>" required>
-            </div>
-            <div class="form-group"><label class="form-label">担当部署</label><select name="department" class="form-input" required><option value="">選択</option><? departments.forEach(d => { ?><option value="<?= d ?>" <?= data.evaluator == d ? 'selected' : '' ?>><?= d ?></option><? }); ?></select></div>
-            <div class="form-group"><label class="form-label">期限</label><input type="date" name="deadline" class="form-input" value="<?= data.deadline ? Utilities.formatDate(new Date(data.deadline), 'JST', 'yyyy-MM-dd') : '' ?>"></div>
-            <div class="form-group"><label class="form-label">暫定予算</label><input type="text" name="provisional_budget" class="form-input" value="<?= data.provisional_budget || '' ?>" placeholder="予算を入力"></div>
+          <div class="form-group"><label class="form-label">担当部署</label><select name="department" class="form-input" required><option value="">選択</option><? departments.forEach(d => { ?><option value="<?= d ?>" <?= data.department == d ? 'selected' : '' ?>><?= d ?></option><? }); ?></select></div>
+          <div class="form-group"><label class="form-label">評価者</label><input type="email" name="hopeful_evaluator" class="form-input" value="<?= data.hopeful_evaluator || '' ?>" required></div>
+          <div class="form-group"><label class="form-label">期限</label><input type="date" name="deadline" class="form-input" value="<?= data.deadline ? formatDate(data.deadline, 'yyyy-MM-dd') : '' ?>"></div>
+          <div class="form-group"><label class="form-label">暫定予算</label><input type="text" name="provisional_budget" class="form-input" value="<?= data.provisional_budget || '' ?>"></div>
         </div>
-        <div class="form-group"><label class="form-label">評価者によるコメント</label><textarea name="secondary_eval_comment" class="form-input" rows="4" required><?= data.secondary_eval_comment || '' ?></textarea></div>
-        <div class="button-row">
-          <button type="submit" class="btn">リスク評価を完了</button>
-        </div>
+        <div class="form-group"><label class="form-label">評価者コメント</label><textarea name="secondary_eval_comment" class="form-input" rows="4" required><?= data.secondary_eval_comment || '' ?></textarea></div>
+        <div class="button-row"><button type="submit" class="btn">リスク評価を完了</button></div>
       </form>
     </div>
 
     <div id="card-improvement-report" class="card">
       <h2 class="card-title">🔧 改善報告</h2>
-      <form id="form-improvement-report">
+       <form id="form-improvement-report">
         <input type="hidden" name="id" value="<?= data.unique_id ?>">
         <div class="form-group"><label class="form-label">改善内容</label><textarea name="improvement_details" class="form-input" rows="4" required><?= data.improvement_details || '' ?></textarea></div>
-        <div class="form-group"><label class="form-label">チームメンバー</label><div class="grid grid-3"><input type="email" name="team_member_1" class="form-input" placeholder="報告者(必須)" value="<?= data.team_member_1 || '' ?>" required><input type="email" name="team_member_2" class="form-input" placeholder="協力者1" value="<?= data.team_member_2 || '' ?>"><input type="email" name="team_member_3" class="form-input" placeholder="協力者2" value="<?= data.team_member_3 || '' ?>"></div></div>
-        <div class="form-group"><label class="form-label">参考URL</label><input type="url" name="reference_url" class="form-input" placeholder="https://..." value="<?= data.reference_url || '' ?>"></div>
-        <div class="form-grid">
-          <div class="form-group"><label class="form-label">費用</label><input type="text" name="cost" class="form-input" value="<?= data.cost || '' ?>"></div>
-          <div class="form-group"><label class="form-label">工数</label><input type="text" name="effort" class="form-input" value="<?= data.effort || '' ?>"></div>
-          <div class="form-group"><label class="form-label">効果</label><input type="text" name="effect" class="form-input" value="<?= data.effect || '' ?>"></div>
-        </div>
-        <div class="form-group ojt-section">
-          <label class="form-label">OJT登録</label>
-          <a href="https://script.google.com/a/macros/shabon.com/s/AKfycbz_4dkEmkyCndlrYdUUuqgzrioddSJ0givqmuh-LTviiD9wIV_jrgEIbqB5dycm6kem7A/exec" target="_blank" class="btn btn-secondary">登録</a>
-          <input type="text" name="ojt_id" class="form-input" placeholder="OJT ID (必須)" value="<?= data.ojt_id || '' ?>" required>
-          <div class="toggle-group">
-            <label class="toggle-switch">
-                <input type="checkbox" id="ojt-toggle" name="ojt_completed" value="true" <? if (data.ojt_completed) { ?>checked<? } ?>>
-                <span class="slider"></span>
-            </label>
-            <label for="ojt-toggle" class="toggle-text-label">OJT実施済 (必須)</label>
-          </div>
-        </div>
+        <div class="form-group"><label class="form-label">チームメンバー</label><div class="grid-3"><input type="email" name="team_member_1" class="form-input" placeholder="報告者(必須)" value="<?= data.reporter || '' ?>" required><input type="email" name="team_member_2" class="form-input" placeholder="協力者1" value="<?= data.team_member_2 || '' ?>"><input type="email" name="team_member_3" class="form-input" placeholder="協力者2" value="<?= data.team_member_3 || '' ?>"></div></div>
+        <div class="form-group"><label class="form-label">参考URL</label><input type="url" name="reference_url" class="form-input" value="<?= data.reference_url || '' ?>"></div>
         <div class="button-row">
           <button type="button" class="btn btn-danger revert-button" data-target-status="リスク評価中">差し戻し</button>
           <button type="submit" class="btn">改善報告を送信</button>
         </div>
-      </form>
+       </form>
     </div>
 
     <div id="card-final-evaluation" class="card">
-      <h2 class="card-title">
-        ✅ 最終評価
-        <? if (data.modified_by_evaluator_final) { ?><span class="badge">修正あり</span><? } ?>
-      </h2>
-      <div class="ai-card success">
-        <h3 class="ai-card-title">🤖 AIによる改善後評価</h3>
-        <div class="info-grid"><span class="info-label">AI講評</span><span class="info-value"><?= data.improvement_ai_comment || '---' ?></span></div>
-      </div>
+      <h2 class="card-title">✅ 最終評価</h2>
       <div class="score-correction">
         <h4>改善後スコア修正</h4>
         <form id="form-correct-post" class="score-form">
           <input type="hidden" name="id" value="<?= data.unique_id ?>">
-          <div class="form-group"><label class="form-label">頻度</label><select name="post_frequency" class="form-input"><? for(const val of [1,2,4]) { ?><option value="<?= val ?>" <?= data.post_frequency == val ? 'selected' : '' ?>><?= val ?></option><? } ?></select></div>
-          <div class="form-group"><label class="form-label">可能性</label><select name="post_likelihood" class="form-input"><? for(const val of [1,2,4,6]) { ?><option value="<?= val ?>" <?= data.post_likelihood == val ? 'selected' : '' ?>><?= val ?></option><? } ?></select></div>
-          <div class="form-group"><label class="form-label">重篤度</label><select name="post_severity" class="form-input"><? for(const val of [1,3,6,10]) { ?><option value="<?= val ?>" <?= data.post_severity == val ? 'selected' : '' ?>><?= val ?></option><? } ?></select></div>
+          <input type="hidden" name="type" value="post">
+          <div class="form-group"><label>頻度</label><select name="post_frequency" class="form-input"><? for(const val of [1,2,4]) { ?><option value="<?= val ?>" <?= data.post_frequency == val ? 'selected' : '' ?>><?= val ?></option><? } ?></select></div>
+          <div class="form-group"><label>可能性</label><select name="post_likelihood" class="form-input"><? for(const val of [1,2,4,6]) { ?><option value="<?= val ?>" <?= data.post_likelihood == val ? 'selected' : '' ?>><?= val ?></option><? } ?></select></div>
+          <div class="form-group"><label>重篤度</label><select name="post_severity" class="form-input"><? for(const val of [1,3,6,10]) { ?><option value="<?= val ?>" <?= data.post_severity == val ? 'selected' : '' ?>><?= val ?></option><? } ?></select></div>
           <button type="submit" class="btn">修正</button>
         </form>
       </div>
-      <form id="form-final-eval">
+       <form id="form-final-eval">
         <input type="hidden" name="id" value="<?= data.unique_id ?>">
         <div class="form-group"><label class="form-label">最終評価コメント</label><textarea name="final_eval_comment" class="form-input" rows="4" required><?= data.final_eval_comment || '' ?></textarea></div>
         <div class="button-row">
           <button type="button" class="btn btn-danger revert-button" data-target-status="改善報告中">差し戻し</button>
-          <a href="https://script.google.com/a/macros/shabon.com/s/AKfycbz_4dkEmkyCndlrYdUUuqgzrioddSJ0givqmuh-LTviiD9wIV_jrgEIbqB5dycm6kem7A/exec" target="_blank" class="btn btn-secondary">OJT確認</a>
           <button type="submit" class="btn">最終評価を完了</button>
         </div>
-      </form>
+       </form>
     </div>
-  </div>
 
-  <div id="revert-modal" class="modal">
-    <div class="modal-content">
-      <h2 style="margin-bottom: 1.5rem;">差し戻し理由</h2>
-      <form id="revert-form">
-        <input type="hidden" name="id" value="<?= data.unique_id ?>">
-        <input type="hidden" name="targetStatus" value="">
-        <div class="form-group"><label class="form-label">差し戻す理由を具体的に入力してください。</label><textarea name="reason" class="form-input" rows="4" required placeholder="差し戻しの理由を詳細に記載してください"></textarea></div>
-        <div class="button-row">
-          <button type="button" id="cancel-revert" class="btn btn-secondary">キャンセル</button>
-          <button type="submit" class="btn btn-danger">差し戻しを実行</button>
+    <div id="revert-modal" class="modal">
+        <div class="modal-content">
+          <h2>差し戻し理由</h2>
+          <form id="revert-form">
+            <input type="hidden" name="id" value="<?= data.unique_id ?>">
+            <input type="hidden" name="targetStatus" value="">
+            <div class="form-group"><label class="form-label">理由を具体的に入力してください。</label><textarea name="reason" class="form-input" rows="4" required></textarea></div>
+            <div class="button-row">
+              <button type="button" id="cancel-revert" class="btn btn-secondary">キャンセル</button>
+              <button type="submit" class="btn btn-danger">差し戻しを実行</button>
+            </div>
+          </form>
         </div>
-      </form>
     </div>
   </div>
-
-  <?!= include('javascript'); ?>
+  <?!= include('JavaScript'); ?>
 </body>
 </html>
