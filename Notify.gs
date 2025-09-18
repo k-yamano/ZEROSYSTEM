@@ -1,7 +1,8 @@
 /** 報告者へ受付完了を通知する */
 function notifySubmitter(email, id, subject) {
   const title = `[リスクアセスメント] 受付完了 (ID: ${id})`;
-  const body = `ご報告ありがとうございます。\n\nID: ${id}\n件名: ${subject}\n\n▼状況確認\n${WEBAPP_BASE_URL}?id=${id}`;
+  // ★★★ 本文からURLを削除し、ステータスを追加 ★★★
+  const body = `ご報告ありがとうございます。\n\nID: ${id}\n件名: ${subject}\nステータス: リスク評価中\n\nAIによる初期評価が完了し次第、担当者へ評価依頼が通知されます。`;
   MailApp.sendEmail(email, title, body);
 }
 
@@ -17,21 +18,37 @@ function notifyEvaluator(evaluator, department, id, subject) {
   }
 }
 
+/** 評価者へ改善完了を通知する */
+function notifyImprovementComplete(evaluator, id, subject) {
+  const title = `[要最終評価] 改善報告完了 (ID: ${id})`;
+  const body = `改善報告が提出されました。内容を確認し、最終評価を行ってください。\n\nID: ${id}\n件名: ${subject}\n\n▼評価画面\n${WEBAPP_BASE_URL}?id=${id}`;
+  MailApp.sendEmail(evaluator, title, body);
+}
+
 /** 差し戻しを通知する */
 function notifyRevert(incident, targetStatus, reason) {
   let email = '';
   let msg = '';
   if (targetStatus === '改善報告中') {
-    email = incident.reporter;
+    email = incident.reporter; // 改善報告者
     msg = `ID: ${incident.unique_id} の改善報告が差し戻されました。`;
   } else if (targetStatus === 'リスク評価中') {
-    email = incident.hopeful_evaluator;
+    email = incident.hopeful_evaluator; // 二次評価者
     msg = `ID: ${incident.unique_id} のリスク評価が差し戻されました。`;
   }
-  if (!email) return;
-  const title = `[差し戻し] 対応のお願い (ID: ${incident.unique_id})`;
-  const body = `${msg}\n\n[理由]\n${reason}\n\n▼対応はこちら\n${WEBAPP_BASE_URL}?id=${incident.unique_id}`;
-  MailApp.sendEmail(email, title, body);
+
+  if (email) {
+    const title = `[差し戻し] 対応のお願い (ID: ${incident.unique_id})`;
+    const body = `${msg}\n\n[理由]\n${reason}\n\n▼対応はこちら\n${WEBAPP_BASE_URL}?id=${incident.unique_id}`;
+    MailApp.sendEmail(email, title, body);
+  }
+
+  const department = incident.department;
+  const webhook = getWebhook(department);
+  if (webhook) {
+    const chatMsg = `[差し戻し] ${msg}\n担当者は内容を確認し、再対応をお願いします。\n理由: ${reason}`;
+    sendChat(webhook, chatMsg, incident.unique_id);
+  }
 }
 
 /** Chatに通知を送信する */

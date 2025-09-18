@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>リスクアセスメントレポート - <?= data.unique_id ?></title>
+  <title>リスクアセスメントレポート - <%= data.unique_id %></title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <?!= include('Stylesheet'); ?>
 </head>
@@ -15,10 +15,10 @@
     <div class="card">
       <h2>基本情報</h2>
       <div class="info-grid">
-          <span class="info-label">ID</span><span><?= data.unique_id ?></span>
-          <span class="info-label">発見日時</span><span><?= formatDate(data.timestamp) ?></span>
-          <span class="info-label">件名</span><span><?= data.subject ?></span>
-          <span class="info-label">内容</span><span style="white-space: pre-wrap;"><?= data.details ?></span>
+          <span class="info-label">ID</span><span><%= data.unique_id %></span>
+          <span class="info-label">発見日時</span><span><%= formatDate(data.timestamp) %></span>
+          <span class="info-label">件名</span><span><%= data.subject %></span>
+          <span class="info-label">内容</span><span style="white-space: pre-wrap;"><%= data.details %></span>
       </div>
     </div>
     <div class="card">
@@ -30,13 +30,13 @@
         <tbody>
           <tr>
             <td><strong>AI評価</strong></td>
-            <td class="tc"><?= data.frequency_ai ?></td><td class="tc"><?= data.likelihood_ai ?></td><td class="tc"><?= data.severity_ai ?></td>
-            <td class="tc score-value"><?= data.risk_score_ai ?></td><td><span class="priority-badge <?= data.priority ?>"><?= data.priority ?></span></td>
+            <td class="tc"><%= data.frequency_ai %></td><td class="tc"><%= data.likelihood_ai %></td><td class="tc"><%= data.severity_ai %></td>
+            <td class="tc score-value"><%= data.risk_score_ai %></td><td><span class="priority-badge <%= data.priority %>"><%= data.priority %></span></td>
           </tr>
           <tr>
             <td><strong>改善後評価</strong></td>
-            <td class="tc"><?= data.post_frequency || '-' ?></td><td class="tc"><?= data.post_likelihood || '-' ?></td><td class="tc"><?= data.post_severity || '-' ?></td>
-            <td class="tc score-value"><?= data.post_risk || '-' ?></td><td><span class="priority-badge <?= data.post_priority ?>"><?= data.post_priority || '-' ?></span></td>
+            <td class="tc"><%= data.post_frequency || '-' %></td><td class="tc"><%= data.post_likelihood || '-' %></td><td class="tc"><%= data.post_severity || '-' %></td>
+            <td class="tc score-value"><%= data.post_risk || '-' %></td><td><span class="priority-badge <%= data.post_priority %>"><%= data.post_priority || '-' %></span></td>
           </tr>
         </tbody>
       </table>

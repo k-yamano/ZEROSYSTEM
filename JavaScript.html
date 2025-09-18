@@ -1,103 +1,112 @@
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const status = "<?= data.status ?>";
-    setupForms();
-    setupModal();
-    updateUI(status);
-});
+  document.addEventListener('DOMContentLoaded', function() {
+    handleFormSubmit('form-secondary-eval', 'submitSecondaryEvaluation');
+    handleFormSubmit('form-improvement-report', 'submitImprovementReport');
+    handleFormSubmit('form-correct-post', 'updatePostImproveScores');
+    handleFormSubmit('form-final-eval', 'submitFinalEvaluation');
+    handleFormSubmit('revert-form', 'revert');
 
-function setupForms() {
-    listen('form-correct-ai', 'updateScores');
-    listen('form-secondary-eval', 'submitEval');
-    listen('form-improvement-report', 'submitImprovement');
-    listen('form-correct-post', 'updateScores');
-    listen('form-final-eval', 'submitFinal');
-    listen('revert-form', 'revert');
-    
-    const reportBtn = document.getElementById('report-button');
-    if (reportBtn) {
-        reportBtn.addEventListener('click', () => {
-            const reportUrl = "<?= WEBAPP_BASE_URL ?>?id=<?= data.unique_id ?>&view=report";
-            window.open(reportUrl, '_blank');
-        });
+    // AIスコア修正フォームは、メインフォームとは別にデータを送信
+    const correctAiForm = document.getElementById('form-correct-ai');
+    if(correctAiForm) {
+      correctAiForm.addEventListener('submit', function(e){
+        e.preventDefault();
+        handleFormSubmit('form-correct-ai', 'updateScores');
+      });
     }
-}
 
-function listen(formId, action) {
+    document.querySelectorAll('.revert-button').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const modal = document.getElementById('revert-modal');
+        modal.querySelector('[name="targetStatus"]').value = this.dataset.targetStatus;
+        modal.style.display = 'block';
+      });
+    });
+    document.getElementById('cancel-revert')?.addEventListener('click', () => {
+      document.getElementById('revert-modal').style.display = 'none';
+    });
+  });
+
+  // AIスコア修正フォームのデータをメインフォームにコピーしてから送信するヘルパー
+  function handleCorrectAiSubmit() {
+    const mainForm = document.getElementById('form-secondary-eval');
+    const scoreForm = document.getElementById('form-correct-ai');
+    
+    // score-formのデータをmain-formにコピー
+    mainForm.frequency_ai.value = scoreForm.frequency_ai.value;
+    mainForm.likelihood_ai.value = scoreForm.likelihood_ai.value;
+    mainForm.severity_ai.value = scoreForm.severity_ai.value;
+
+    // 隠しフォームを送信
+    handleFormSubmit('form-correct-ai', 'updateScores');
+  }
+
+  function handleFormSubmit(formId, serverActionName) {
     const form = document.getElementById(formId);
     if (!form) return;
-    form.addEventListener('submit', function(e) {
-        e.preventDefault();
-        const data = Object.fromEntries(new FormData(form).entries());
-        setBusy(form, true);
-        showMsg(form, '送信中...', 'info');
-        google.script.run
-            .withSuccessHandler(res => {
-                showMsg(form, res, 'success');
-                if (form.id !== 'revert-form') {
-                    setTimeout(() => location.reload(), 1500);
-                } else {
-                    document.getElementById('revert-modal').style.display = 'none';
-                    setTimeout(() => location.reload(), 1000);
-                }
-            })
-            .withFailureHandler(err => {
-                setBusy(form, false);
-                showMsg(form, err.message, 'error');
-            })
-            .serverAction(action, data);
-    });
-}
+    
+    const submitHandler = function(e) {
+      e.preventDefault();
+      
+      const ojtCheckbox = form.querySelector('input[name="ojt_completed"]');
+      if (ojtCheckbox && ojtCheckbox.required && !ojtCheckbox.checked) {
+        showMsg(form, 'OJT登録のチェックは必須です。', 'error');
+        return;
+      }
+      if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+      }
+      
+      const data = Object.fromEntries(new FormData(form).entries());
+      setBusy(form, true);
+      showMsg(form, '送信中...', 'info');
 
-function setBusy(form, isBusy) {
-    form.querySelectorAll('input, select, textarea, button').forEach(el => el.disabled = isBusy);
-    form.style.opacity = isBusy ? 0.7 : 1;
-}
-
-function showMsg(form, message, type) {
-    let msgBox = form.querySelector('.inline-msg');
-    if (!msgBox) {
-        msgBox = document.createElement('div');
-        form.prepend(msgBox);
-    }
-    msgBox.className = `inline-msg ${type}`;
-    msgBox.textContent = message;
-}
-
-function setupModal() {
-    const modal = document.getElementById('revert-modal');
-    if (!modal) return;
-    document.querySelectorAll('.revert-button').forEach(btn => {
-        btn.addEventListener('click', function() {
-            modal.querySelector('[name="targetStatus"]').value = this.dataset.targetStatus;
-            modal.style.display = 'block';
-        });
-    });
-    document.getElementById('cancel-revert')?.addEventListener('click', () => modal.style.display = 'none');
-    window.addEventListener('click', e => { if (e.target === modal) modal.style.display = 'none'; });
-}
-
-/** ★★★ UIの編集可否を制御する関数 (修正版) ★★★ */
-function updateUI(status) {
-    const allCards = document.querySelectorAll('.card[id]');
-    allCards.forEach(card => {
-        card.classList.add('disabled');
-        card.querySelectorAll('input, select, textarea, button').forEach(el => el.disabled = true);
-    });
-
-    const activeCardIdMap = {
-        'リスク評価中': 'card-risk-evaluation',
-        '改善報告中': 'card-improvement-report',
-        '最終評価中': 'card-final-evaluation',
+      google.script.run
+        .withSuccessHandler(function(msg) {
+          setBusy(form, false);
+          showMsg(form, msg, 'success');
+          if (serverActionName === 'revert') {
+             document.getElementById('revert-modal').style.display = 'none';
+          }
+        })
+        .withFailureHandler(function(err) {
+          setBusy(form, false);
+          showMsg(form, err.message, 'error');
+        })
+        [serverActionName](data);
     };
 
-    const activeCardId = activeCardIdMap[status];
-    if (activeCardId) {
-        const activeCard = document.getElementById(activeCardId);
-        if (activeCard) {
-            activeCard.classList.remove('disabled');
-            activeCard.querySelectorAll('input, select, textarea, button').forEach(el => el.disabled = false);
-        }
+    // 既存のイベントリスナーを削除してから追加
+    form.removeEventListener('submit', form.submitHandler);
+    form.submitHandler = submitHandler;
+    form.addEventListener('submit', form.submitHandler);
+  }
+
+  function setBusy(form, isBusy) {
+    if (!form) return;
+    form.querySelectorAll('input, select, textarea, button').forEach(el => {
+      if(el.type !== 'button' || !el.classList.contains('revert-button')) {
+         el.disabled = !!isBusy;
+      }
+    });
+    form.style.opacity = isBusy ? '0.7' : '1';
+  }
+
+  function showMsg(form, message, type) {
+    let msgBox = form.querySelector('.inline-msg');
+    if (!msgBox) {
+      msgBox = document.createElement('div');
+      const buttonGroup = form.querySelector('.btn-group');
+      if (buttonGroup) {
+        buttonGroup.parentNode.insertBefore(msgBox, buttonGroup);
+      } else {
+        form.appendChild(msgBox);
+      }
     }
-}
+    msgBox.textContent = message;
+    msgBox.className = `inline-msg ${type}`;
+  }
+  
 </script>
+
