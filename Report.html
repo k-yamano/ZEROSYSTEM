@@ -2,45 +2,100 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>リスクアセスメントレポート - <%= data.unique_id %></title>
+  <title>リスクアセスメントレポート - <?= data.unique_id ?></title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <?!= include('Stylesheet'); ?>
+  <style>
+    :root {
+      --font-sans: 'Helvetica Neue', 'Arial', 'Hiragino Sans', 'Meiryo', sans-serif;
+      --text-primary: #111827;
+      --text-secondary: #4b5563;
+      --border-color: #d1d5db;
+      --surface-color: #f9fafb;
+    }
+    body { font-family: var(--font-sans); color: var(--text-primary); background-color: #fff; line-height: 1.6; }
+    .page { width: 210mm; min-height: 297mm; padding: 20mm; margin: 10mm auto; background: white; }
+    .report-header { text-align: center; border-bottom: 2px solid var(--text-primary); padding-bottom: 1rem; margin-bottom: 2rem; }
+    .report-title { font-size: 2rem; font-weight: bold; margin: 0; }
+    .report-id { font-size: 1rem; color: var(--text-secondary); }
+    .section { margin-bottom: 2rem; }
+    .section-title { font-size: 1.25rem; font-weight: bold; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 1rem; }
+    .info-grid { display: grid; grid-template-columns: 150px 1fr; gap: 0.75rem; }
+    .info-label { font-weight: bold; color: var(--text-secondary); }
+    .pre-wrap { white-space: pre-wrap; font-family: var(--font-sans); }
+    .score-table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    .score-table th, .score-table td { border: 1px solid var(--border-color); padding: 0.75rem; text-align: center; }
+    .score-table th { background-color: var(--surface-color); font-weight: bold; }
+    .priority-badge { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 12px; font-weight: 600; }
+    .priority-高 { background-color: #fee2e2; color: #b91c1c; }
+    .priority-中 { background-color: #ffedd5; color: #9a3412; }
+    .priority-低 { background-color: #d1fae5; color: #065f46; }
+    .report-footer { text-align: center; margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--border-color); font-size: 0.875rem; color: var(--text-secondary); }
+    @media print {
+      body { margin: 0; background-color: #fff; }
+      .page { margin: 0; box-shadow: none; border: none; }
+      .no-print { display: none; }
+    }
+  </style>
 </head>
 <body>
-  <div class="container">
-    <header>
-      <h1>リスクアセスメントレポート</h1>
-      <button onclick="window.print()" class="report-button btn">印刷</button>
+  <div class="page">
+    <header class="report-header">
+      <h1 class="report-title">リスクアセスメントレポート</h1>
+      <p class="report-id">ID: <?= data.unique_id ?></p>
     </header>
-    <div class="card">
-      <h2>基本情報</h2>
-      <div class="info-grid">
-          <span class="info-label">ID</span><span><%= data.unique_id %></span>
-          <span class="info-label">発見日時</span><span><%= formatDate(data.timestamp) %></span>
-          <span class="info-label">件名</span><span><%= data.subject %></span>
-          <span class="info-label">内容</span><span style="white-space: pre-wrap;"><%= data.details %></span>
-      </div>
-    </div>
-    <div class="card">
-        <h2>スコアサマリー</h2>
+
+    <main>
+      <section class="section">
+        <h2 class="section-title">1. 基本情報</h2>
+        <div class="info-grid">
+          <div class="info-label">件名</div><div><?= data.subject ?></div>
+          <div class="info-label">発見日時</div><div><?= formatDate(data.timestamp) ?></div>
+          <div class="info-label">発見者</div><div><?= data.discoverer_email ?></div>
+          <div class="info-label">内容詳細</div><div class="pre-wrap"><?= data.details ?></div>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2 class="section-title">2. リスク評価サマリー</h2>
         <table class="score-table">
-        <thead>
-          <tr><th>評価項目</th><th>頻度</th><th>可能性</th><th>重篤度</th><th>リスク値</th><th>優先度</th></tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td><strong>AI評価</strong></td>
-            <td class="tc"><%= data.frequency_ai %></td><td class="tc"><%= data.likelihood_ai %></td><td class="tc"><%= data.severity_ai %></td>
-            <td class="tc score-value"><%= data.risk_score_ai %></td><td><span class="priority-badge <%= data.priority %>"><%= data.priority %></span></td>
-          </tr>
-          <tr>
-            <td><strong>改善後評価</strong></td>
-            <td class="tc"><%= data.post_frequency || '-' %></td><td class="tc"><%= data.post_likelihood || '-' %></td><td class="tc"><%= data.post_severity || '-' %></td>
-            <td class="tc score-value"><%= data.post_risk || '-' %></td><td><span class="priority-badge <%= data.post_priority %>"><%= data.post_priority || '-' %></span></td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+          <thead><tr><th>評価項目</th><th>頻度</th><th>可能性</th><th>重篤度</th><th>リスク値</th><th>優先度</th></tr></thead>
+          <tbody>
+            <tr><td><strong>AI評価</strong></td><td><?= data.frequency_ai ?></td><td><?= data.likelihood_ai ?></td><td><?= data.severity_ai ?></td><td><?= data.risk_score_ai ?></td><td><span class="priority-badge priority-<?= data.priority ?>"><?= data.priority ?></span></td></tr>
+            <tr><td><strong>改善後評価</strong></td><td><?= data.post_frequency || '-' ?></td><td><?= data.post_likelihood || '-' ?></td><td><?= data.post_severity || '-' ?></td><td><?= data.post_risk || '-' ?></td><td><span class="priority-badge priority-<?= data.post_priority ?>"><?= data.post_priority || '-' ?></span></td></tr>
+            <tr><td colspan="4"><strong>リスク低減値</strong></td><td colspan="2"><?= data.risk_reduction_value === null ? '-' : data.risk_reduction_value ?></td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="section">
+        <h2 class="section-title">3. 評価と改善の経緯</h2>
+        <div class="info-grid">
+          <div class="info-label">AI評価理由</div><div class="pre-wrap"><?= data.evaluation_reason ?></div>
+          <div class="info-label">管理者コメント</div><div class="pre-wrap"><?= data.secondary_eval_comment ?></div>
+          <div class="info-label">改善報告</div><div class="pre-wrap"><?= data.improvement_details ?></div>
+          <div class="info-label">AI改善評価</div><div class="pre-wrap"><?= data.improvement_ai_comment ?></div>
+          <div class="info-label">最終評価コメント</div><div class="pre-wrap"><?= data.final_eval_comment ?></div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="report-footer">
+      ZEROSYSTEM | 出力日時: <?= formatDate(new Date()) ?>
+    </footer>
   </div>
+   <script>
+    // ユーティリティ関数（GAS側と重複するが、レポート単体でも機能するように）
+    function formatDate(dateString, format = 'yyyy/MM/dd HH:mm') {
+      if (!dateString) return '';
+      try {
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return dateString;
+        return date.toLocaleString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false });
+      } catch(e) {
+        return dateString;
+      }
+    }
+   </script>
 </body>
 </html>
+

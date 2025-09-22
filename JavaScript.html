@@ -1,25 +1,21 @@
 <script>
   document.addEventListener('DOMContentLoaded', function() {
+    // 各フォームとサーバー側関数を紐付け
     handleFormSubmit('form-secondary-eval', 'submitSecondaryEvaluation');
     handleFormSubmit('form-improvement-report', 'submitImprovementReport');
-    handleFormSubmit('form-correct-post', 'updatePostImproveScores');
+    handleFormSubmit('form-correct-ai', 'updateScores', { noReload: true });
+    handleFormSubmit('form-correct-post', 'updatePostImproveScores', { noReload: true });
     handleFormSubmit('form-final-eval', 'submitFinalEvaluation');
     handleFormSubmit('revert-form', 'revert');
 
-    // AIスコア修正フォームは、メインフォームとは別にデータを送信
-    const correctAiForm = document.getElementById('form-correct-ai');
-    if(correctAiForm) {
-      correctAiForm.addEventListener('submit', function(e){
-        e.preventDefault();
-        handleFormSubmit('form-correct-ai', 'updateScores');
-      });
-    }
-
+    // モーダル表示の紐付け
     document.querySelectorAll('.revert-button').forEach(btn => {
       btn.addEventListener('click', function() {
         const modal = document.getElementById('revert-modal');
-        modal.querySelector('[name="targetStatus"]').value = this.dataset.targetStatus;
-        modal.style.display = 'block';
+        if (modal) {
+          modal.querySelector('[name="targetStatus"]').value = this.dataset.targetStatus;
+          modal.style.display = 'flex';
+        }
       });
     });
     document.getElementById('cancel-revert')?.addEventListener('click', () => {
@@ -27,32 +23,16 @@
     });
   });
 
-  // AIスコア修正フォームのデータをメインフォームにコピーしてから送信するヘルパー
-  function handleCorrectAiSubmit() {
-    const mainForm = document.getElementById('form-secondary-eval');
-    const scoreForm = document.getElementById('form-correct-ai');
-    
-    // score-formのデータをmain-formにコピー
-    mainForm.frequency_ai.value = scoreForm.frequency_ai.value;
-    mainForm.likelihood_ai.value = scoreForm.likelihood_ai.value;
-    mainForm.severity_ai.value = scoreForm.severity_ai.value;
-
-    // 隠しフォームを送信
-    handleFormSubmit('form-correct-ai', 'updateScores');
-  }
-
-  function handleFormSubmit(formId, serverActionName) {
+  // フォーム送信処理を共通化
+  function handleFormSubmit(formId, serverActionName, options = {}) {
     const form = document.getElementById(formId);
     if (!form) return;
     
-    const submitHandler = function(e) {
+    if (form.submitHandler) form.removeEventListener('submit', form.submitHandler);
+
+    form.submitHandler = function(e) {
       e.preventDefault();
       
-      const ojtCheckbox = form.querySelector('input[name="ojt_completed"]');
-      if (ojtCheckbox && ojtCheckbox.required && !ojtCheckbox.checked) {
-        showMsg(form, 'OJT登録のチェックは必須です。', 'error');
-        return;
-      }
       if (!form.checkValidity()) {
         form.reportValidity();
         return;
@@ -66,47 +46,51 @@
         .withSuccessHandler(function(msg) {
           setBusy(form, false);
           showMsg(form, msg, 'success');
-          if (serverActionName === 'revert') {
-             document.getElementById('revert-modal').style.display = 'none';
+          // オプションでリロードを制御
+          if (!options.noReload) {
+            setTimeout(() => { location.reload(); }, 1500);
           }
         })
         .withFailureHandler(function(err) {
           setBusy(form, false);
           showMsg(form, err.message, 'error');
         })
-        [serverActionName](data);
+        .serverAction(serverActionName, data);
     };
-
-    // 既存のイベントリスナーを削除してから追加
-    form.removeEventListener('submit', form.submitHandler);
-    form.submitHandler = submitHandler;
+    
     form.addEventListener('submit', form.submitHandler);
   }
 
   function setBusy(form, isBusy) {
     if (!form) return;
     form.querySelectorAll('input, select, textarea, button').forEach(el => {
-      if(el.type !== 'button' || !el.classList.contains('revert-button')) {
-         el.disabled = !!isBusy;
-      }
+       el.disabled = !!isBusy;
     });
-    form.style.opacity = isBusy ? '0.7' : '1';
+    form.style.opacity = isBusy ? 0.7 : 1;
   }
 
   function showMsg(form, message, type) {
     let msgBox = form.querySelector('.inline-msg');
-    if (!msgBox) {
-      msgBox = document.createElement('div');
-      const buttonGroup = form.querySelector('.btn-group');
-      if (buttonGroup) {
-        buttonGroup.parentNode.insertBefore(msgBox, buttonGroup);
-      } else {
-        form.appendChild(msgBox);
-      }
+    if (msgBox) {
+        msgBox.textContent = message;
+        msgBox.className = `inline-msg ${type}`;
     }
-    msgBox.textContent = message;
-    msgBox.className = `inline-msg ${type}`;
   }
-  
+
+  function formatDate(dateString, format = 'yyyy/MM/dd HH:mm') {
+    if (!dateString) return '';
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return dateString;
+      
+      if (format === 'yyyy-MM-dd') {
+        return date.getFullYear() + '-' + ('0' + (date.getMonth() + 1)).slice(-2) + '-' + ('0' + date.getDate()).slice(-2);
+      }
+      
+      return date.toLocaleString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }).replace(/\//g, '/');
+    } catch(e) {
+      return dateString;
+    }
+  }
 </script>
 

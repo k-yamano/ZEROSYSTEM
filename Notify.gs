@@ -1,16 +1,20 @@
-/** 報告者へ受付完了を通知する */
+/**
+ * フォーム提出者に受付完了メールを送信します。
+ */
 function notifySubmitter(email, id, subject) {
   const title = `[リスクアセスメント] 受付完了 (ID: ${id})`;
-  // ★★★ 本文からURLを削除し、ステータスを追加 ★★★
   const body = `ご報告ありがとうございます。\n\nID: ${id}\n件名: ${subject}\nステータス: リスク評価中\n\nAIによる初期評価が完了し次第、担当者へ評価依頼が通知されます。`;
   MailApp.sendEmail(email, title, body);
 }
 
-/** AI評価完了を評価者へ通知する */
+/**
+ * AI評価完了を評価者へメールとChatで通知します。
+ */
 function notifyEvaluator(evaluator, department, id, subject) {
   const title = `[要評価] AI評価完了 (ID: ${id})`;
   const body = `AIによる初期評価が完了しました。二次評価を行ってください。\n\nID: ${id}\n件名: ${subject}\n\n▼評価画面\n${WEBAPP_BASE_URL}?id=${id}`;
   MailApp.sendEmail(evaluator, title, body);
+  
   const webhook = getWebhook(department);
   if (webhook) {
     const chatMsg = `[${id}] 新規リスクのAI評価が完了しました。\n担当者(${evaluator})は二次評価をお願いします。`;
@@ -18,22 +22,26 @@ function notifyEvaluator(evaluator, department, id, subject) {
   }
 }
 
-/** 評価者へ改善完了を通知する */
+/**
+ * 評価者へ改善完了を通知します。
+ */
 function notifyImprovementComplete(evaluator, id, subject) {
   const title = `[要最終評価] 改善報告完了 (ID: ${id})`;
   const body = `改善報告が提出されました。内容を確認し、最終評価を行ってください。\n\nID: ${id}\n件名: ${subject}\n\n▼評価画面\n${WEBAPP_BASE_URL}?id=${id}`;
   MailApp.sendEmail(evaluator, title, body);
 }
 
-/** 差し戻しを通知する */
+/**
+ * 差し戻しを関係者へメールとChatで通知します。
+ */
 function notifyRevert(incident, targetStatus, reason) {
   let email = '';
   let msg = '';
   if (targetStatus === '改善報告中') {
-    email = incident.reporter; // 改善報告者
+    email = incident.reporter;
     msg = `ID: ${incident.unique_id} の改善報告が差し戻されました。`;
   } else if (targetStatus === 'リスク評価中') {
-    email = incident.hopeful_evaluator; // 二次評価者
+    email = incident.hopeful_evaluator;
     msg = `ID: ${incident.unique_id} のリスク評価が差し戻されました。`;
   }
 
@@ -51,14 +59,18 @@ function notifyRevert(incident, targetStatus, reason) {
   }
 }
 
-/** Chatに通知を送信する */
+/**
+ * Google Chatにメッセージを送信します。
+ */
 function sendChat(webhook, message, id) {
   const payload = { "text": `${message}\n${WEBAPP_BASE_URL}?id=${id}` };
   const options = { method: 'post', contentType: 'application/json; charset=UTF-8', payload: JSON.stringify(payload) };
   try { UrlFetchApp.fetch(webhook, options); } catch (e) { Logger.log(`Chat notify failed: ${e.message}`); }
 }
 
-/** 部署のWebhook URLを取得する */
+/**
+ * スクリプトプロパティから部署のWebhook URLを取得します。
+ */
 function getWebhook(department) {
   try {
     const hooks = JSON.parse(SCRIPT_PROPS.getProperty('DEPT_WEBHOOKS_JSON') || '{}');
