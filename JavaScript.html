@@ -1,15 +1,18 @@
 <script>
   document.addEventListener('DOMContentLoaded', function() {
-    // 各フォームとサーバー側関数を紐付け
-    // ★修正: submitSecondaryEvaluation と submitImprovementReport, revert-form に noReload: true を追加
-    handleFormSubmit('form-secondary-eval', 'submitSecondaryEvaluation', { noReload: true });
-    handleFormSubmit('form-improvement-report', 'submitImprovementReport', { noReload: true });
-    handleFormSubmit('form-correct-ai', 'updateScores', { noReload: true });
-    handleFormSubmit('form-correct-post', 'updatePostImproveScores', { noReload: true });
-    handleFormSubmit('form-final-eval', 'submitFinalEvaluation');
-    handleFormSubmit('revert-form', 'revert', { 
-        noReload: true, 
-        onSuccess: () => {
+  // ★修正: form-secondary-eval から noReload: true を削除
+  handleFormSubmit('form-secondary-eval', 'submitSecondaryEvaluation');
+  handleFormSubmit('form-improvement-report', 'submitImprovementReport', { noReload: true });
+  handleFormSubmit('form-correct-ai', 'updateScores', { noReload: true });
+  handleFormSubmit('form-correct-post', 'updatePostImproveScores', { noReload: true });
+  handleFormSubmit('form-final-eval', 'submitFinalEvaluation');
+  handleFormSubmit('revert-form', 'revert', { 
+      noReload: true, 
+      onSuccess: () => {
+          const modal = document.getElementById('revert-modal');
+          if(modal) modal.style.display = 'none';
+          setTimeout(() => { location.reload(); }, 1000); // 差し戻し後もリロード
+      }
             // ★追加: 成功時にモーダルを閉じる
             const modal = document.getElementById('revert-modal');
             if(modal) modal.style.display = 'none';

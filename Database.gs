@@ -74,17 +74,23 @@ function getDataById(id) {
  * @param {number|null} rowNum Optional row number to avoid re-searching.
  */
 function updateRowById(id, data, rowNum = null) {
-  const info = rowNum ?
+  const info = rowNum ? 
     { sheet: SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME), headers: SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME).getRange(1, 1, 1, SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME).getLastColumn()).getValues()[0], rowNum } : findRowById_(id);
   if (!info) throw new Error(`ID: ${id} が見つかりません。`);
   
   const { sheet, headers, rowNum: foundRowNum } = info;
   const targetRow = rowNum || foundRowNum;
-  const range = sheet.getRange(targetRow, 1, 1, headers.length);
-  const currentValues = range.getValues()[0];
-  headers.forEach((h, i) => { if (data.hasOwnProperty(h)) currentValues[i] = data[h]; });
-  range.setValues([currentValues]);
+  
+  // ★★★ 修正箇所 ★★★
+  // 行全体を上書きするのではなく、dataに含まれるキーの列だけを更新する
+  headers.forEach((header, index) => {
+    if (data.hasOwnProperty(header)) {
+      const col = index + 1;
+      sheet.getRange(targetRow, col).setValue(data[header]);
+    }
+  });
 }
+
 
 /**
  * Logs updates to the Log sheet.
@@ -106,4 +112,3 @@ function logUpdate(id, item, before, after, evaluator) {
     Logger.log(`ログの記録に失敗しました: ${e.message}`);
   }
 }
-

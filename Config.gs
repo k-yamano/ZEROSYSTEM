@@ -30,6 +30,7 @@ const KEY_MAP = {
   'リスク低減値': 'risk_reduction_value',
   '最終評価コメント': 'final_eval_comment',
   '最終通知日時': 'final_notification_timestamp',
-  '差し戻し履歴': 'revert_history'
+  '差し戻し履歴': 'revert_history',
+  '差し戻し理由': 'revert_reason' 
 };
 

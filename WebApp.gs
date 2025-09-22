@@ -71,9 +71,7 @@ function updateScores(data) {
   if (String(beforeData.likelihood_ai) !== String(likelihood_ai)) logUpdate(id, '発生の可能性（AI評価）', beforeData.likelihood_ai, likelihood_ai, evaluator);
   if (String(beforeData.severity_ai)   !== String(severity_ai))   logUpdate(id, '重篤度（AI評価）', beforeData.severity_ai, severity_ai, evaluator);
   
-  const { sheet, headers, rowNum } = findRowById_(id);
-  updateRowById(id, updateData, rowNum);
-  setFormulas(sheet, rowNum, headers); // ★追加: 数式を再設定
+  updateRowById(id, updateData);
   return 'AI評価スコアを更新しました。';
 }
 
@@ -128,9 +126,7 @@ function updatePostImproveScores(data) {
   if (String(beforeData.post_likelihood) !== String(post_likelihood)) logUpdate(id, '発生の可能性（改善後評価）', beforeData.post_likelihood, post_likelihood, evaluator);
   if (String(beforeData.post_severity)   !== String(post_severity))   logUpdate(id, '重篤度（改善後評価）', beforeData.post_severity, post_severity, evaluator);
 
-  const { sheet, headers, rowNum } = findRowById_(id);
-  updateRowById(id, updateData, rowNum);
-  setFormulas(sheet, rowNum, headers); // ★追加: 数式を再設定
+  updateRowById(id, updateData);
   return `改善後評価を更新しました。`;
 }
 
@@ -140,8 +136,9 @@ function updatePostImproveScores(data) {
 function submitFinalEvaluation(data) {
   const { id, final_eval_comment, ojt_confirmed_final } = data;
   if (!id || !final_eval_comment) throw new Error("最終評価コメントは必須です。");
-  // OJT確認必須のバリデーションを削除
-  // if (ojt_confirmed_final !== 'true') throw new Error("OJT実施状況の確認は必須です。");
+  // ★修正: OJT実施確認を必須にする
+  if (ojt_confirmed_final !== 'true') throw new Error("OJT実施状況の確認は必須です。");
+  
   const updateData = {
     'ステータス': '完了',
     '最終評価コメント': final_eval_comment,
@@ -150,7 +147,6 @@ function submitFinalEvaluation(data) {
   };
   updateRowById(id, updateData);
   
-  // ★追加: 最終評価完了をChat通知
   const incident = getDataById(id);
   notifyFinalEvaluationComplete(incident);
   
@@ -177,9 +173,12 @@ function revert(data) {
     reason: reason,
     from_status: incident.status
   });
+  
+  // ★修正: 差し戻し理由を専用の列にも格納
   updateRowById(id, { 
     'ステータス': targetStatus, 
-    '差し戻し履歴': JSON.stringify(history) 
+    '差し戻し履歴': JSON.stringify(history),
+    '差し戻し理由': reason 
   });
 
   notifyRevert(incident, targetStatus, reason);

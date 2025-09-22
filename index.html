@@ -43,7 +43,7 @@
             </div>
           </div>
         </div>
-        
+
         <? var isRiskEvalActive = data.status === 'リスク評価中'; ?>
         <div class="timeline-item">
           <div class="timeline-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="20" height="20"><path d="M10.082 3.922c.395-.197.872-.197 1.267 0l6.432 3.216c.362.181.58.553.58.962v5.8c0 .41-.218.781-.58.962l-6.432 3.216c-.395.197-.872-.197-1.267 0L3.65 14.88c-.362-.181-.58-.553-.58-.962v-5.8c0-.41.218.781.58-.962l6.432-3.216ZM9.5 7.5a.5.5 0 0 0-1 0v5a.5.5 0 0 0 1 0v-5ZM11.5 9.5a.5.5 0 0 0-1 0v5a.5.5 0 0 0 1 0v-5Z" /></svg></div>
@@ -103,7 +103,7 @@
           <div class="card <?= isImprovementActive ? 'is-active' : '' ?>">
             <div class="card-header"><h2 class="card-title">改善報告</h2></div>
             <div class="card-body">
-              <? if (data.status === '差し戻し対応中' && data.revert_history && JSON.parse(data.revert_history).length > 0) { 
+              <? if (data.status === '差し戻し対応中' && data.revert_history && JSON.parse(data.revert_history).length > 0) {
                   var lastRevert = JSON.parse(data.revert_history)[0];
               ?>
               <div class="revert-info-box">
@@ -135,17 +135,17 @@
                       <input type="email" name="team_member_3" class="form-input" placeholder="協力者2" value="<?= data.team_member_3 || '' ?>" <?= !isImprovementActive ? 'disabled' : '' ?>>
                   </div>
                 </div>
-                 <div class="form-group">
-                    <label class="form-label">参考URL</label>
-                    <input type="url" name="reference_url" class="form-input" value="<?= data.reference_url || '' ?>" <?= !isImprovementActive ? 'disabled' : '' ?>>
-                 </div>
-                <div class="form-group internal-card">
-                  <label class="form-label">OJT関連</label>
+                <fieldset class="form-fieldset">
+                  <legend class="form-legend">OJT & 参考資料</legend>
+                  <div class="form-group">
+                      <label class="form-label">参考URL</label>
+                      <input type="url" name="reference_url" class="form-input" value="<?= data.reference_url || '' ?>" <?= !isImprovementActive ? 'disabled' : '' ?>>
+                  </div>
                   <div class="form-grid-3">
                       <div class="form-group">
-                           <label class="form-label">OJT登録</label>
+                          <label class="form-label">OJT登録 (必須)</label>
                           <div class="toggle-container-vertical">
-                              <label class="toggle"><input type="checkbox" name="ojt_registered" value="true" <?= !isImprovementActive ? 'disabled' : '' ?> <?= data.ojt_registered ? 'checked' : ''?>><span class="toggle-slider"></span></label>
+                              <label class="toggle"><input type="checkbox" name="ojt_registered" value="true" required <?= !isImprovementActive ? 'disabled' : '' ?> <?= data.ojt_registered ? 'checked' : ''?>><span class="toggle-slider"></span></label>
                           </div>
                       </div>
                       <div class="form-group">
@@ -155,14 +155,14 @@
                           </div>
                       </div>
                       <div class="form-group">
-                          <label class="form-label">OJT ID</label>
+                          <label class="form-label">OJT ID (必須)</label>
                           <div class="input-with-button">
-                             <input type="text" name="ojt_id" class="form-input" value="<?= data.ojt_id || '' ?>" <?= !isImprovementActive ? 'disabled' : '' ?>>
+                            <input type="text" name="ojt_id" class="form-input" value="<?= data.ojt_id || '' ?>" required <?= !isImprovementActive ? 'disabled' : '' ?>>
                             <a href="https://lookerstudio.google.com/s/qjaDkJXXraU" target="_blank" class="btn btn-secondary">ID確認</a>
                           </div>
                       </div>
                   </div>
-                </div>
+                </fieldset>
                 <div class="btn-group">
                     <button type="submit" class="btn btn-primary" <?= !isImprovementActive ? 'disabled' : '' ?>>改善内容を報告</button>
                 </div>
@@ -174,70 +174,70 @@
         <? } ?>
 
         <? var isFinalEvalActive = data.status === '最終評価中' || data.status === '再評価待ち'; ?>
-<? if (data.status === '最終評価中' || data.status === '再評価待ち' || data.status === '完了') { ?>
-<div class="timeline-item">
-  <div class="timeline-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="20" height="20"><path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clip-rule="evenodd" /></svg></div>
-  <div class="card <?= isFinalEvalActive ? 'is-active' : '' ?>">
-    <div class="card-header"><h2 class="card-title">最終評価</h2></div>
-    <div class="card-body">
-        <? if(data.improvement_details) { ?>
-        <div class="final-eval-section">
-          <h3>提出された改善報告</h3>
-          <div class="info-grid">
-            <div class="info-label">改善内容</div><div class="info-value pre-wrap"><?= data.improvement_details ?></div>
-          </div>
-        </div>
-        <div class="final-eval-section">
-          <h3>AIによる改善評価</h3>
-          <div class="info-grid">
-            <div class="info-label">AI講評</div><div class="info-value pre-wrap"><?= data.improvement_ai_comment ?></div>
-          </div>
-           <form id="form-correct-post" class="score-correction">
-              <div class="score-correction-header">
-                <h4 class="score-correction-title">改善後スコア修正</h4>
-                 <? if (data.modified_by_evaluator_final) { ?>
-                   <span class="badge-modified">評価者による修正済み</span>
-                 <? } ?>
-              </div>
-              <div class="score-form">
-                <input type="hidden" name="id" value="<?= data.unique_id ?>">
-                <div class="form-group-inline"><label class="form-label">頻度</label><select name="post_frequency" class="form-input" <?= !isFinalEvalActive ? 'disabled' : '' ?>><? var opts=[1,2,4]; for(var i=0;i<opts.length;i++){ ?><option value="<?= opts[i] ?>" <?= Number(data.post_frequency) === opts[i] ? 'selected' : '' ?>><?= opts[i] ?></option><? } ?></select></div>
-                <div class="form-group-inline"><label class="form-label">可能性</label><select name="post_likelihood" class="form-input" <?= !isFinalEvalActive ? 'disabled' : '' ?>><? var opts=[1,2,4,6]; for(var i=0;i<opts.length;i++){ ?><option value="<?= opts[i] ?>" <?= Number(data.post_likelihood) === opts[i] ? 'selected' : '' ?>><?= opts[i] ?></option><? } ?></select></div>
-                <div class="form-group-inline"><label class="form-label">重篤度</label><select name="post_severity" class="form-input" <?= !isFinalEvalActive ? 'disabled' : '' ?>><? var opts=[1,3,6,10]; for(var i=0;i<opts.length;i++){ ?><option value="<?= opts[i] ?>" <?= Number(data.post_severity) === opts[i] ? 'selected' : '' ?>><?= opts[i] ?></option><? } ?></select></div>
-                <button type="submit" class="btn btn-tertiary" <?= !isFinalEvalActive ? 'disabled' : '' ?>>修正</button>
-              </div>
-              <div class="inline-msg"></div>
-            </form>
-        </div>
-        <? } ?>
-        <form id="form-final-eval">
-          <input type="hidden" name="id" value="<?= data.unique_id ?>">
+        <? if (data.status === '最終評価中' || data.status === '再評価待ち' || data.status === '完了') { ?>
+        <div class="timeline-item">
+          <div class="timeline-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="20" height="20"><path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clip-rule="evenodd" /></svg></div>
+          <div class="card <?= isFinalEvalActive ? 'is-active' : '' ?>">
+            <div class="card-header"><h2 class="card-title">最終評価</h2></div>
+            <div class="card-body">
+                <? if(data.improvement_details) { ?>
+                <div class="final-eval-section">
+                  <h3>提出された改善報告</h3>
+                  <div class="info-grid">
+                    <div class="info-label">改善内容</div><div class="info-value pre-wrap"><?= data.improvement_details ?></div>
+                  </div>
+                </div>
+                <div class="final-eval-section">
+                  <h3>AIによる改善評価</h3>
+                  <div class="info-grid">
+                    <div class="info-label">AI講評</div><div class="info-value pre-wrap"><?= data.improvement_ai_comment ?></div>
+                  </div>
+                   <form id="form-correct-post" class="score-correction">
+                      <div class="score-correction-header">
+                        <h4 class="score-correction-title">改善後スコア修正</h4>
+                         <? if (data.modified_by_evaluator_final) { ?>
+                           <span class="badge-modified">評価者による修正済み</span>
+                         <? } ?>
+                      </div>
+                      <div class="score-form">
+                        <input type="hidden" name="id" value="<?= data.unique_id ?>">
+                        <div class="form-group-inline"><label class="form-label">頻度</label><select name="post_frequency" class="form-input" <?= !isFinalEvalActive ? 'disabled' : '' ?>><? var opts=[1,2,4]; for(var i=0;i<opts.length;i++){ ?><option value="<?= opts[i] ?>" <?= Number(data.post_frequency) === opts[i] ? 'selected' : '' ?>><?= opts[i] ?></option><? } ?></select></div>
+                        <div class="form-group-inline"><label class="form-label">可能性</label><select name="post_likelihood" class="form-input" <?= !isFinalEvalActive ? 'disabled' : '' ?>><? var opts=[1,2,4,6]; for(var i=0;i<opts.length;i++){ ?><option value="<?= opts[i] ?>" <?= Number(data.post_likelihood) === opts[i] ? 'selected' : '' ?>><?= opts[i] ?></option><? } ?></select></div>
+                        <div class="form-group-inline"><label class="form-label">重篤度</label><select name="post_severity" class="form-input" <?= !isFinalEvalActive ? 'disabled' : '' ?>><? var opts=[1,3,6,10]; for(var i=0;i<opts.length;i++){ ?><option value="<?= opts[i] ?>" <?= Number(data.post_severity) === opts[i] ? 'selected' : '' ?>><?= opts[i] ?></option><? } ?></select></div>
+                        <button type="submit" class="btn btn-tertiary" <?= !isFinalEvalActive ? 'disabled' : '' ?>>修正</button>
+                      </div>
+                      <div class="inline-msg"></div>
+                    </form>
+                </div>
+                <? } ?>
+                <form id="form-final-eval">
+                  <input type="hidden" name="id" value="<?= data.unique_id ?>">
 
-          <div class="final-eval-section">
-            <h3>OJT実施状況確認</h3>
-            <div class="ojt-final-check">
-              <div class="toggle-container-vertical">
-                  <label class="form-label">OJT実施を確認</label>
-                  <label class="toggle"><input type="checkbox" name="ojt_confirmed_final" value="true" <?= !isFinalEvalActive ? 'disabled' : '' ?> <?= data.ojt_confirmed_final ? 'checked' : ''?>><span class="toggle-slider"></span></label>
-              </div>
-              <a href="https://script.google.com/a/macros/shabon.com/s/AKfycbz_4dkEmkyCndlrYdUUuqgzrioddSJ0givqmuh-LTviiD9wIV_jrgEIbqB5dycm6kem7A/exec" target="_blank" class="btn btn-secondary">確認リンク</a>
+                  <div class="final-eval-section">
+                    <h3>OJT実施状況確認</h3>
+                    <div class="ojt-final-check">
+                      <div class="toggle-container-vertical">
+                          <label class="form-label">OJT実施を確認</label>
+                          <label class="toggle"><input type="checkbox" name="ojt_confirmed_final" value="true" required <?= !isFinalEvalActive ? 'disabled' : '' ?> <?= data.ojt_confirmed_final ? 'checked' : ''?>><span class="toggle-slider"></span></label>
+                      </div>
+                      <a href="https://script.google.com/a/macros/shabon.com/s/AKfycbz_4dkEmkyCndlrYdUUuqgzrioddSJ0givqmuh-LTviiD9wIV_jrgEIbqB5dycm6kem7A/exec" target="_blank" class="btn btn-secondary">確認リンク</a>
+                    </div>
+                  </div>
+
+                  <div class="form-group">
+                    <label class="form-label">最終評価コメント</label>
+                    <textarea name="final_eval_comment" class="form-input" rows="4" required <?= !isFinalEvalActive ? 'disabled' : '' ?>><?= data.final_eval_comment || '' ?></textarea>
+                  </div>
+                  <div class="btn-group">
+                    <button type="button" class="btn btn-danger revert-button" data-target-status="差し戻し対応中" <?= !isFinalEvalActive ? 'disabled' : '' ?>>差し戻し</button>
+                    <button type="submit" class="btn btn-primary" <?= !isFinalEvalActive ? 'disabled' : '' ?>>評価を完了</button>
+                  </div>
+                  <div class="inline-msg"></div>
+                </form>
             </div>
           </div>
-
-          <div class="form-group">
-            <label class="form-label">最終評価コメント</label>
-            <textarea name="final_eval_comment" class="form-input" rows="4" required <?= !isFinalEvalActive ? 'disabled' : '' ?>><?= data.final_eval_comment || '' ?></textarea>
-          </div>
-          <div class="btn-group">
-            <button type="button" class="btn btn-danger revert-button" data-target-status="差し戻し対応中" <?= !isFinalEvalActive ? 'disabled' : '' ?>>差し戻し</button>
-            <button type="submit" class="btn btn-primary" <?= !isFinalEvalActive ? 'disabled' : '' ?>>評価を完了</button>
-          </div>
-          <div class="inline-msg"></div>
-        </form>
-    </div>
-  </div>
-</div>
-<? } ?>
+        </div>
+        <? } ?>
       </div>
 
       <aside class="sidebar">
