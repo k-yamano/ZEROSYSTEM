@@ -9,7 +9,6 @@ function serverAction(action, data) {
   }
   try {
     logAction(action, data.id);
-
     switch (action) {
       case 'submitSecondaryEvaluation': return submitSecondaryEvaluation(data);
       case 'updateScores': return updateScores(data);
@@ -68,12 +67,13 @@ function updateScores(data) {
     '重篤度（AI評価）': severity_ai,
     '評価者によるリスク修正': new Date()
   };
- 
   if (String(beforeData.frequency_ai)  !== String(frequency_ai))  logUpdate(id, '頻度（AI評価）', beforeData.frequency_ai, frequency_ai, evaluator);
   if (String(beforeData.likelihood_ai) !== String(likelihood_ai)) logUpdate(id, '発生の可能性（AI評価）', beforeData.likelihood_ai, likelihood_ai, evaluator);
   if (String(beforeData.severity_ai)   !== String(severity_ai))   logUpdate(id, '重篤度（AI評価）', beforeData.severity_ai, severity_ai, evaluator);
   
-  updateRowById(id, updateData);
+  const { sheet, headers, rowNum } = findRowById_(id);
+  updateRowById(id, updateData, rowNum);
+  setFormulas(sheet, rowNum, headers); // ★追加: 数式を再設定
   return 'AI評価スコアを更新しました。';
 }
 
@@ -83,9 +83,9 @@ function updateScores(data) {
 function submitImprovementReport(data) {
   const { id, improvement_details, ojt_registered, ojt_implemented, ojt_id } = data;
   if (!id || !improvement_details) throw new Error('改善内容の詳細は必須です。');
-  if (ojt_registered !== 'true') throw new Error('OJT登録のチェックは必須です。');
-  if (!ojt_id) throw new Error('OJT IDの入力は必須です。');
-
+  // OJT登録必須のバリデーションを削除
+  // if (ojt_registered !== 'true') throw new Error('OJT登録のチェックは必須です。');
+  // if (!ojt_id) throw new Error('OJT IDの入力は必須です。');
   const ai = evalImprovement(id, improvement_details);
   const updateData = {
       'ステータス': '最終評価中', '改善完了報告': improvement_details,
@@ -124,12 +124,13 @@ function updatePostImproveScores(data) {
     '重篤度（改善後評価）': post_severity,
     '評価者による修正（最終）': new Date()
   };
-
   if (String(beforeData.post_frequency)  !== String(post_frequency))  logUpdate(id, '頻度（改善評価）', beforeData.post_frequency, post_frequency, evaluator);
   if (String(beforeData.post_likelihood) !== String(post_likelihood)) logUpdate(id, '発生の可能性（改善後評価）', beforeData.post_likelihood, post_likelihood, evaluator);
   if (String(beforeData.post_severity)   !== String(post_severity))   logUpdate(id, '重篤度（改善後評価）', beforeData.post_severity, post_severity, evaluator);
 
-  updateRowById(id, updateData);
+  const { sheet, headers, rowNum } = findRowById_(id);
+  updateRowById(id, updateData, rowNum);
+  setFormulas(sheet, rowNum, headers); // ★追加: 数式を再設定
   return `改善後評価を更新しました。`;
 }
 
@@ -139,8 +140,8 @@ function updatePostImproveScores(data) {
 function submitFinalEvaluation(data) {
   const { id, final_eval_comment, ojt_confirmed_final } = data;
   if (!id || !final_eval_comment) throw new Error("最終評価コメントは必須です。");
-  if (ojt_confirmed_final !== 'true') throw new Error("OJT実施状況の確認は必須です。");
-
+  // OJT確認必須のバリデーションを削除
+  // if (ojt_confirmed_final !== 'true') throw new Error("OJT実施状況の確認は必須です。");
   const updateData = {
     'ステータス': '完了',
     '最終評価コメント': final_eval_comment,
@@ -148,6 +149,11 @@ function submitFinalEvaluation(data) {
     '最終通知日時': new Date()
   };
   updateRowById(id, updateData);
+  
+  // ★追加: 最終評価完了をChat通知
+  const incident = getDataById(id);
+  notifyFinalEvaluationComplete(incident);
+  
   return '最終評価を保存し、完了しました。';
 }
 
@@ -171,7 +177,6 @@ function revert(data) {
     reason: reason,
     from_status: incident.status
   });
-
   updateRowById(id, { 
     'ステータス': targetStatus, 
     '差し戻し履歴': JSON.stringify(history) 
@@ -192,4 +197,3 @@ function notifyDepartmentChat_(department, message){
     });
   }
 }
-

@@ -1,12 +1,20 @@
 <script>
   document.addEventListener('DOMContentLoaded', function() {
     // 各フォームとサーバー側関数を紐付け
-    handleFormSubmit('form-secondary-eval', 'submitSecondaryEvaluation');
-    handleFormSubmit('form-improvement-report', 'submitImprovementReport');
+    // ★修正: submitSecondaryEvaluation と submitImprovementReport, revert-form に noReload: true を追加
+    handleFormSubmit('form-secondary-eval', 'submitSecondaryEvaluation', { noReload: true });
+    handleFormSubmit('form-improvement-report', 'submitImprovementReport', { noReload: true });
     handleFormSubmit('form-correct-ai', 'updateScores', { noReload: true });
     handleFormSubmit('form-correct-post', 'updatePostImproveScores', { noReload: true });
     handleFormSubmit('form-final-eval', 'submitFinalEvaluation');
-    handleFormSubmit('revert-form', 'revert');
+    handleFormSubmit('revert-form', 'revert', { 
+        noReload: true, 
+        onSuccess: () => {
+            // ★追加: 成功時にモーダルを閉じる
+            const modal = document.getElementById('revert-modal');
+            if(modal) modal.style.display = 'none';
+        }
+    });
 
     // モーダル表示の紐付け
     document.querySelectorAll('.revert-button').forEach(btn => {
@@ -46,9 +54,18 @@
         .withSuccessHandler(function(msg) {
           setBusy(form, false);
           showMsg(form, msg, 'success');
+          
+          // ★追加: 成功時のコールバックを実行
+          if (options.onSuccess) {
+              options.onSuccess();
+          }
+
           // オプションでリロードを制御
           if (!options.noReload) {
             setTimeout(() => { location.reload(); }, 1500);
+          } else {
+            // ★追加: 3秒後にメッセージを消す
+            setTimeout(() => { showMsg(form, '', 'info'); }, 3000);
           }
         })
         .withFailureHandler(function(err) {
@@ -93,4 +110,3 @@
     }
   }
 </script>
-

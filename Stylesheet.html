@@ -32,7 +32,8 @@
   .id-badge { background-color: #eef2ff; color: var(--primary-dark); }
   .status-badge { color: #fff; }
   .status-リスク評価中 { background-color: var(--warning-color); }
-  .status-改善報告中, .status-差し戻し対応中 { background-color: #3b82f6; }
+  .status-改善報告中 { background-color: #3b82f6; }
+  .status-差し戻し対応中 { background-color: var(--danger-color); } /* ★修正: 差し戻しステータスの色を追加 */
   .status-最終評価中, .status-再評価待ち { background-color: var(--primary-color); }
   .status-完了 { background-color: var(--success-color); }
 
@@ -107,6 +108,9 @@
   .revert-item { font-size: 0.875rem; }
   .revert-meta { color: var(--text-secondary); font-size: 0.75rem; }
   .revert-reason { margin-top: 0.25rem; }
+  /* ★追加: 差し戻し情報表示用のスタイル */
+  .revert-info-box { background-color: #fff5f5; border: 1px solid var(--danger-color); color: #c81e1e; padding: 1.5rem; border-radius: var(--radius-md); margin-bottom: 1.5rem; }
+  .revert-info-header { font-weight: 600; font-size: 1rem; margin-bottom: 1rem; }
   .internal-card { background-color: #f9fafb; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1rem; }
   .toggle-container-vertical { display: flex; flex-direction: column; align-items: flex-start; gap: 0.5rem; }
   .input-with-button { display: flex; gap: 0.5rem; }
@@ -134,4 +138,3 @@
   .inline-msg.error { color: var(--danger-color); }
   .inline-msg.info { color: var(--text-secondary); }
 </style>
-

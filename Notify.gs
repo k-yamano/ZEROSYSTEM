@@ -32,12 +32,24 @@ function notifyImprovementComplete(evaluator, id, subject) {
 }
 
 /**
+ * ★追加: 最終評価完了をChat通知します。
+ */
+function notifyFinalEvaluationComplete(incident) {
+  const department = incident.department;
+  const webhook = getWebhook(department);
+  if (webhook) {
+    const chatMsg = `[完了] ID: ${incident.unique_id} のリスクアセスメントが完了しました。\n件名: ${incident.subject}`;
+    sendChat(webhook, chatMsg, incident.unique_id);
+  }
+}
+
+/**
  * 差し戻しを関係者へメールとChatで通知します。
  */
 function notifyRevert(incident, targetStatus, reason) {
   let email = '';
   let msg = '';
-  if (targetStatus === '改善報告中') {
+  if (targetStatus === '改善報告中') { // '差し戻し対応中' の一つ手前
     email = incident.reporter;
     msg = `ID: ${incident.unique_id} の改善報告が差し戻されました。`;
   } else if (targetStatus === 'リスク評価中') {
@@ -65,7 +77,8 @@ function notifyRevert(incident, targetStatus, reason) {
 function sendChat(webhook, message, id) {
   const payload = { "text": `${message}\n${WEBAPP_BASE_URL}?id=${id}` };
   const options = { method: 'post', contentType: 'application/json; charset=UTF-8', payload: JSON.stringify(payload) };
-  try { UrlFetchApp.fetch(webhook, options); } catch (e) { Logger.log(`Chat notify failed: ${e.message}`); }
+  try { UrlFetchApp.fetch(webhook, options);
+  } catch (e) { Logger.log(`Chat notify failed: ${e.message}`); }
 }
 
 /**
