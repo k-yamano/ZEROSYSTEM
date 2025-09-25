@@ -6,28 +6,53 @@
  * @returns {object} The parsed JSON response from the API.
  */
 function evalNewIncident(id, subject, details) {
+  // ★修正: ユーザー提案の新しいプロンプト（加算方式）に更新
   const prompt = `
     以下のインシデント報告について、リスク評価を行ってください。
-    回答は必ず日本語で、以下のキーを含むJSON形式で生成してください。
-    - "reason": 評価理由
-    - "plan": 改善プランの提案
-    - "accident_type": 事故の型分類
-    - "causal_agent": 起因物
-    - "scores": { "frequency": 数値, "likelihood": 数値, "severity": 数値 }
-    頻度は[1,2,4]、可能性は[1,2,4,6]、重篤度は[1,3,6,10]から必ず選択してください。
-    ---
+
+    # 評価対象
     件名: ${subject}
     内容: ${details}
-    ---
+
+    # 回答形式
+    必ず日本語で、以下の形式のJSONで回答してください：
+    {
+      "reason": "評価理由の詳細説明（200文字以内）",
+      "plan": "具体的な改善プランの提案（300文字以内）",
+      "accident_type": "事故の型分類",
+      "causal_agent": "起因物の特定",
+      "additional_classification": "品質・環境案件の場合は4M分析結果、それ以外は空欄",
+      "scores": {
+        "frequency": "頻度スコア",
+        "likelihood": "可能性スコア", 
+        "severity": "重篤度スコア"
+      },
+      "risk_level": "総合リスクレベル（ランクⅠ～Ⅳ）",
+      "priority": "対応優先度（A～D）"
+    }
+
+    # 評価基準
+    ## スコア選択肢（必須）
+    - 頻度（frequency）: [1, 2, 4] から選択 (1:稀, 2:時々, 4:頻繁)
+    - 可能性（likelihood）: [1, 2, 4, 6] から選択 (1:極めて低い, 2:低い, 4:中程度, 6:高い)
+    - 重篤度（severity）: [1, 3, 6, 10] から選択 (1:軽微, 3:中程度, 6:重大, 10:致命的)
+
+    ## 総合リスクレベル
+    リスクスコア = 頻度 + 可能性 + 重篤度 (0～20点)
+    - ランクⅣ (12～20点): 直ちに解決すべき問題がある
+    - ランクⅢ (9～11点): 重大な問題がある
+    - ランクⅡ (6～8点): 多少問題がある
+    - ランクⅠ (5点以下): 必要に応じて低減措置
+
+    ## 事故型分類（厚生労働省基準）
+    以下から最も適切なものを1つ選択：
+    墜落・転落, 転倒, 激突, 飛来・落下, 崩壊・倒壊, 挟まれ・巻き込まれ, 切れ・こすれ, 踏み抜き, おぼれ, 高温・低温の物との接触, 有害物質等との接触, 爆発, 火災, 交通事故（道路）, 交通事故（その他）, その他
   `;
   return callGemini(id, prompt, 'evalNewIncident');
 }
 
 /**
  * Evaluates an improvement report using the Gemini API.
- * @param {string} id The incident ID.
- * @param {string} details The details of the improvement.
- * @returns {object} The parsed JSON response from the API.
  */
 function evalImprovement(id, details) {
   const prompt = `

@@ -23,6 +23,22 @@ function notifyEvaluator(evaluator, department, id, subject) {
 }
 
 /**
+ * ★追加: 改善担当者へ改善指示を通知します。
+ */
+function notifyImplementer(implementer, department, id, subject, comment) {
+  const title = `[要対応] 改善指示 (ID: ${id})`;
+  const body = `リスクアセスメントの改善指示が発行されました。内容を確認し、対応を行ってください。\n\nID: ${id}\n件名: ${subject}\n\n[評価者コメント]\n${comment}\n\n▼対応画面\n${WEBAPP_BASE_URL}?id=${id}`;
+  MailApp.sendEmail(implementer, title, body);
+
+  const webhook = getWebhook(department);
+  if (webhook) {
+    const chatMsg = `[要対応] ID: ${id} の改善指示が発行されました。\n担当者(${implementer})は内容を確認し、対応をお願いします。`;
+    sendChat(webhook, chatMsg, id);
+  }
+}
+
+
+/**
  * 評価者へ改善完了を通知します。
  */
 function notifyImprovementComplete(evaluator, id, subject) {

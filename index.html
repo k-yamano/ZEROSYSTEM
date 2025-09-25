@@ -52,31 +52,29 @@
               <h2 class="card-title">AI一次評価 & 改善指示</h2>
             </div>
             <div class="card-body">
-              <div class="ai-evaluation">
-                <h3>AIによる初期評価</h3>
-                <div class="info-grid">
-                  <div class="info-label">評価理由</div><div class="info-value pre-wrap"><?= data.evaluation_reason ?></div>
-                  <div class="info-label">改善プラン案</div><div class="info-value pre-wrap"><?= data.improvement_plan_ai ?></div>
-                </div>
-                <form id="form-correct-ai" class="score-correction">
-                  <div class="score-correction-header">
-                    <h4 class="score-correction-title">AI評価スコア修正</h4>
-                    <? if (data.modified_by_evaluator_primary) { ?>
-                      <span class="badge-modified">評価者による修正済み</span>
-                    <? } ?>
-                  </div>
-                  <div class="score-form">
-                    <input type="hidden" name="id" value="<?= data.unique_id ?>">
-                    <div class="form-group-inline"><label class="form-label">頻度</label><select name="frequency_ai" class="form-input" <?= !isRiskEvalActive ? 'disabled' : '' ?>><? var opts=[1,2,4]; for(var i=0;i<opts.length;i++){ ?><option value="<?= opts[i] ?>" <?= Number(data.frequency_ai) === opts[i] ? 'selected' : '' ?>><?= opts[i] ?></option><? } ?></select></div>
-                    <div class="form-group-inline"><label class="form-label">可能性</label><select name="likelihood_ai" class="form-input" <?= !isRiskEvalActive ? 'disabled' : '' ?>><? var opts=[1,2,4,6]; for(var i=0;i<opts.length;i++){ ?><option value="<?= opts[i] ?>" <?= Number(data.likelihood_ai) === opts[i] ? 'selected' : '' ?>><?= opts[i] ?></option><? } ?></select></div>
-                    <div class="form-group-inline"><label class="form-label">重篤度</label><select name="severity_ai" class="form-input" <?= !isRiskEvalActive ? 'disabled' : '' ?>><? var opts=[1,3,6,10]; for(var i=0;i<opts.length;i++){ ?><option value="<?= opts[i] ?>" <?= Number(data.severity_ai) === opts[i] ? 'selected' : '' ?>><?= opts[i] ?></option><? } ?></select></div>
-                    <button type="submit" class="btn btn-tertiary" <?= !isRiskEvalActive ? 'disabled' : '' ?>>修正</button>
-                  </div>
-                  <div class="inline-msg"></div>
-                </form>
-              </div>
               <form id="form-secondary-eval">
                 <input type="hidden" name="id" value="<?= data.unique_id ?>">
+                <div class="ai-evaluation">
+                  <h3>AIによる初期評価</h3>
+                  <div class="info-grid">
+                    <div class="info-label">評価理由</div><div class="info-value pre-wrap"><?= data.evaluation_reason ?></div>
+                    <div class="info-label">改善プラン案</div><div class="info-value pre-wrap"><?= data.improvement_plan_ai ?></div>
+                  </div>
+                  <div class="score-correction">
+                    <div class="score-correction-header">
+                      <h4 class="score-correction-title">AI評価スコア</h4>
+                      <? if (data.modified_by_evaluator_primary) { ?>
+                        <span class="badge-modified">評価者による修正済み</span>
+                      <? } ?>
+                    </div>
+                    <div class="score-form">
+                      <div class="form-group-inline"><label class="form-label">頻度</label><select id="frequency_ai" name="frequency_ai" class="form-input" <?= !isRiskEvalActive ? 'disabled' : '' ?>><? var opts=[1,2,4]; for(var i=0;i<opts.length;i++){ ?><option value="<?= opts[i] ?>" <?= Number(data.frequency_ai) === opts[i] ? 'selected' : '' ?>><?= opts[i] ?></option><? } ?></select></div>
+                      <div class="form-group-inline"><label class="form-label">可能性</label><select id="likelihood_ai" name="likelihood_ai" class="form-input" <?= !isRiskEvalActive ? 'disabled' : '' ?>><? var opts=[1,2,4,6]; for(var i=0;i<opts.length;i++){ ?><option value="<?= opts[i] ?>" <?= Number(data.likelihood_ai) === opts[i] ? 'selected' : '' ?>><?= opts[i] ?></option><? } ?></select></div>
+                      <div class="form-group-inline"><label class="form-label">重篤度</label><select id="severity_ai" name="severity_ai" class="form-input" <?= !isRiskEvalActive ? 'disabled' : '' ?>><? var opts=[1,3,6,10]; for(var i=0;i<opts.length;i++){ ?><option value="<?= opts[i] ?>" <?= Number(data.severity_ai) === opts[i] ? 'selected' : '' ?>><?= opts[i] ?></option><? } ?></select></div>
+                    </div>
+                  </div>
+                </div>
+                
                 <div class="form-group">
                   <label class="form-label">リスク評価コメント</label>
                   <textarea name="secondary_eval_comment" class="form-input" rows="4" required <?= !isRiskEvalActive ? 'disabled' : '' ?>><?= data.secondary_eval_comment || '' ?></textarea>
@@ -139,20 +137,22 @@
                     <label class="form-label">参考URL</label>
                     <input type="url" name="reference_url" class="form-input" value="<?= data.reference_url || '' ?>" <?= !isImprovementActive ? 'disabled' : '' ?>>
                  </div>
-                <div class="form-group internal-card">
+                 <div class="form-group internal-card">
                   <label class="form-label">OJT関連</label>
-                  <div class="form-grid-3">
+                  <div class="form-grid-ojt">
                       <div class="form-group">
                            <label class="form-label">OJT登録</label>
-                          <div class="toggle-container-vertical">
-                              <label class="toggle"><input type="checkbox" name="ojt_registered" value="true" <?= !isImprovementActive ? 'disabled' : '' ?> <?= data.ojt_registered ? 'checked' : ''?>><span class="toggle-slider"></span></label>
-                          </div>
+                           <button type="button" class="btn-toggle" data-target="ojt_registered">
+                             <input type="hidden" name="ojt_registered" id="ojt_registered" value="<?= data.ojt_registered ? 'true' : 'false' ?>">
+                             <span class="text-on">OJT登録済</span><span class="text-off">OJT未登録</span>
+                           </button>
                       </div>
                       <div class="form-group">
                           <label class="form-label">OJT実施</label>
-                          <div class="toggle-container-vertical">
-                            <label class="toggle"><input type="checkbox" name="ojt_implemented" value="true" <?= !isImprovementActive ? 'disabled' : '' ?> <?= data.ojt_implemented ? 'checked' : ''?>><span class="toggle-slider"></span></label>
-                          </div>
+                          <button type="button" class="btn-toggle" data-target="ojt_implemented">
+                            <input type="hidden" name="ojt_implemented" id="ojt_implemented" value="<?= data.ojt_implemented ? 'true' : 'false' ?>">
+                            <span class="text-on">OJT実施済</span><span class="text-off">OJT未実施</span>
+                          </button>
                       </div>
                       <div class="form-group">
                           <label class="form-label">OJT ID</label>
@@ -180,6 +180,8 @@
   <div class="card <?= isFinalEvalActive ? 'is-active' : '' ?>">
     <div class="card-header"><h2 class="card-title">最終評価</h2></div>
     <div class="card-body">
+      <form id="form-final-eval">
+        <input type="hidden" name="id" value="<?= data.unique_id ?>">
         <? if(data.improvement_details) { ?>
         <div class="final-eval-section">
           <h3>提出された改善報告</h3>
@@ -192,43 +194,39 @@
           <div class="info-grid">
             <div class="info-label">AI講評</div><div class="info-value pre-wrap"><?= data.improvement_ai_comment ?></div>
           </div>
-           <form id="form-correct-post" class="score-correction">
+           <div class="score-correction">
               <div class="score-correction-header">
-                <h4 class="score-correction-title">改善後スコア修正</h4>
+                <h4 class="score-correction-title">改善後スコア</h4>
                  <? if (data.modified_by_evaluator_final) { ?>
                    <span class="badge-modified">評価者による修正済み</span>
                  <? } ?>
               </div>
               <div class="score-form">
-                <input type="hidden" name="id" value="<?= data.unique_id ?>">
-                <div class="form-group-inline"><label class="form-label">頻度</label><select name="post_frequency" class="form-input" <?= !isFinalEvalActive ? 'disabled' : '' ?>><? var opts=[1,2,4]; for(var i=0;i<opts.length;i++){ ?><option value="<?= opts[i] ?>" <?= Number(data.post_frequency) === opts[i] ? 'selected' : '' ?>><?= opts[i] ?></option><? } ?></select></div>
-                <div class="form-group-inline"><label class="form-label">可能性</label><select name="post_likelihood" class="form-input" <?= !isFinalEvalActive ? 'disabled' : '' ?>><? var opts=[1,2,4,6]; for(var i=0;i<opts.length;i++){ ?><option value="<?= opts[i] ?>" <?= Number(data.post_likelihood) === opts[i] ? 'selected' : '' ?>><?= opts[i] ?></option><? } ?></select></div>
-                <div class="form-group-inline"><label class="form-label">重篤度</label><select name="post_severity" class="form-input" <?= !isFinalEvalActive ? 'disabled' : '' ?>><? var opts=[1,3,6,10]; for(var i=0;i<opts.length;i++){ ?><option value="<?= opts[i] ?>" <?= Number(data.post_severity) === opts[i] ? 'selected' : '' ?>><?= opts[i] ?></option><? } ?></select></div>
-                <button type="submit" class="btn btn-tertiary" <?= !isFinalEvalActive ? 'disabled' : '' ?>>修正</button>
+                <div class="form-group-inline"><label class="form-label">頻度</label><select id="post_frequency" name="post_frequency" class="form-input" <?= !isFinalEvalActive ? 'disabled' : '' ?>><? var opts=[1,2,4]; for(var i=0;i<opts.length;i++){ ?><option value="<?= opts[i] ?>" <?= Number(data.post_frequency) === opts[i] ? 'selected' : '' ?>><?= opts[i] ?></option><? } ?></select></div>
+                <div class="form-group-inline"><label class="form-label">可能性</label><select id="post_likelihood" name="post_likelihood" class="form-input" <?= !isFinalEvalActive ? 'disabled' : '' ?>><? var opts=[1,2,4,6]; for(var i=0;i<opts.length;i++){ ?><option value="<?= opts[i] ?>" <?= Number(data.post_likelihood) === opts[i] ? 'selected' : '' ?>><?= opts[i] ?></option><? } ?></select></div>
+                <div class="form-group-inline"><label class="form-label">重篤度</label><select id="post_severity" name="post_severity" class="form-input" <?= !isFinalEvalActive ? 'disabled' : '' ?>><? var opts=[1,3,6,10]; for(var i=0;i<opts.length;i++){ ?><option value="<?= opts[i] ?>" <?= Number(data.post_severity) === opts[i] ? 'selected' : '' ?>><?= opts[i] ?></option><? } ?></select></div>
               </div>
-              <div class="inline-msg"></div>
-            </form>
+            </div>
         </div>
         <? } ?>
-        <form id="form-final-eval">
-          <input type="hidden" name="id" value="<?= data.unique_id ?>">
 
-          <div class="final-eval-section">
+          <div class="final-eval-section section-control-split">
             <h3>OJT実施状況確認</h3>
-            <div class="ojt-final-check">
-              <div class="toggle-container-vertical">
-                  <label class="form-label">OJT実施を確認</label>
-                  <label class="toggle"><input type="checkbox" name="ojt_confirmed_final" value="true" <?= !isFinalEvalActive ? 'disabled' : '' ?> <?= data.ojt_confirmed_final ? 'checked' : ''?>><span class="toggle-slider"></span></label>
-              </div>
-              <a href="https://script.google.com/a/macros/shabon.com/s/AKfycbz_4dkEmkyCndlrYdUUuqgzrioddSJ0givqmuh-LTviiD9wIV_jrgEIbqB5dycm6kem7A/exec" target="_blank" class="btn btn-secondary">確認リンク</a>
+            <div class="control-group">
+                <a href="https://script.google.com/a/macros/shabon.com/s/AKfycbz_4dkEmkyCndlrYdUUuqgzrioddSJ0givqmuh-LTviiD9wIV_jrgEIbqB5dycm6kem7A/exec" target="_blank" class="btn btn-secondary">OJT確認</a>
+                <button type="button" class="btn-toggle" data-target="ojt_confirmed_final">
+                  <input type="hidden" name="ojt_confirmed_final" id="ojt_confirmed_final" value="<?= data.ojt_confirmed_final ? 'true' : 'false' ?>">
+                  <span class="text-on">OJT実施を確認済</span><span class="text-off">OJT実施は未確認</span>
+                </button>
             </div>
-            <div class="form-group">
-                    <h3>ナレッジ登録</h3>
-                    <div class="toggle-container-vertical">
-                      <label class="form-label">グッドプラクティスとして登録</label>
-                      <label class="toggle"><input type="checkbox" name="good_practice" value="true" <?= !isFinalEvalActive ? 'disabled' : '' ?> <?= data.good_practice ? 'checked' : ''?>><span class="toggle-slider"></span></label>
-                    </div>
-            </div>
+          </div>
+
+          <div class="final-eval-section section-control-split">
+            <h3 class="knowledge-label"><strong>Good改善！</strong>みんなに共有する</h3>
+            <button type="button" class="btn-toggle" data-target="good_practice">
+              <input type="hidden" name="good_practice" id="good_practice" value="<?= data.good_practice ? 'true' : 'false' ?>">
+              <span class="text-on">ナレッジ登録済</span><span class="text-off">ナレッジ未登録</span>
+            </button>
           </div>
 
           <div class="form-group">
@@ -236,7 +234,7 @@
             <textarea name="final_eval_comment" class="form-input" rows="4" required <?= !isFinalEvalActive ? 'disabled' : '' ?>><?= data.final_eval_comment || '' ?></textarea>
           </div>
           <div class="btn-group">
-            <button type="button" class="btn btn-danger revert-button" data-target-status="差し戻し対応中" <?= !isFinalEvalActive ? 'disabled' : '' ?>>差し戻し</button>
+            <button type="button" class="btn btn-danger revert-button" data-target-status="改善報告中" <?= !isFinalEvalActive ? 'disabled' : '' ?>>差し戻し</button>
             <button type="submit" class="btn btn-primary" <?= !isFinalEvalActive ? 'disabled' : '' ?>>評価を完了</button>
           </div>
           <div class="inline-msg"></div>

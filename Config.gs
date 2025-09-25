@@ -20,18 +20,24 @@ const KEY_MAP = {
   '優先順位': 'priority', '事故の型分類（AI評価）': 'accident_type_ai', '起因物（AI評価）': 'causal_agent_ai',
   '評価者によるリスク修正': 'modified_by_evaluator_primary', '改善完了報告': 'improvement_details',
   '報告者': 'reporter', '協力者1': 'team_member_2', '協力者2': 'team_member_3', 'URL': 'reference_url',
-  'OJT登録': 'ojt_registered', 'OJT実施': 'ojt_implemented', 'OJT最終確認': 'ojt_confirmed_final', 'OJTID': 'ojt_id', 
+  'OJT登録': 'ojt_registered', // AH列
+  'OJT実施': 'ojt_implemented', // AI列
+  'OJT最終確認': 'ojt_confirmed_final', // AK列
+  'OJTID': 'ojt_id', 
+  
   '費用': 'cost', '工数': 'effort', '効果': 'effect',
   'AI改善評価': 'improvement_ai_comment', '頻度（改善評価）': 'post_frequency',
   '発生の可能性（改善後評価）': 'post_likelihood', '重篤度（改善後評価）': 'post_severity',
   '改善後のリスクの見積もり': 'post_risk',
+ 
   '改善後の優先度': 'post_priority',
   '評価者による修正（最終）': 'modified_by_evaluator_final',
   'リスク低減値': 'risk_reduction_value',
   '最終評価コメント': 'final_eval_comment',
   '最終通知日時': 'final_notification_timestamp',
   '差し戻し履歴': 'revert_history',
+  '最新の差し戻し理由': 'latest_revert_reason', // BB列
+
   'アプリURL': 'app_url',
   'グッドプラクティス': 'good_practice'
 };
-

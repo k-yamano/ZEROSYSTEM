@@ -33,7 +33,7 @@
   .status-badge { color: #fff; }
   .status-リスク評価中 { background-color: var(--warning-color); }
   .status-改善報告中 { background-color: #3b82f6; }
-  .status-差し戻し対応中 { background-color: var(--danger-color); } /* ★修正: 差し戻しステータスの色を追加 */
+  .status-差し戻し対応中 { background-color: var(--danger-color); }
   .status-最終評価中, .status-再評価待ち { background-color: var(--primary-color); }
   .status-完了 { background-color: var(--success-color); }
 
@@ -68,8 +68,24 @@
   .form-input:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px var(--primary-light); }
   .form-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
   .form-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
-  @media(max-width: 768px) { .form-grid-3, .form-grid-4 { grid-template-columns: repeat(2, 1fr); } }
-  @media(max-width: 640px) { .form-grid-3, .form-grid-4 { grid-template-columns: 1fr; } }
+  
+  .form-grid-ojt {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1.4fr;
+    gap: 1rem;
+    align-items: end; /* 子要素の高さを下端で揃える */
+  }
+  .form-grid-ojt .form-group {
+    margin-bottom: 0; /* form-groupのデフォルトマージンをリセット */
+  }
+
+
+  @media(max-width: 768px) { 
+    .form-grid-3, .form-grid-4, .form-grid-ojt { grid-template-columns: repeat(2, 1fr); } 
+  }
+  @media(max-width: 640px) { 
+    .form-grid-3, .form-grid-4, .form-grid-ojt { grid-template-columns: 1fr; } 
+  }
 
   /* Buttons */
   .btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.625rem 1.25rem; border: 1px solid transparent; border-radius: var(--radius-md); font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: all 0.2s; text-decoration: none; }
@@ -92,8 +108,32 @@
   .score-correction-title { font-size: 1rem; font-weight: 600; margin: 0; }
   .badge-modified { background-color: var(--tertiary-color); color: #fff; padding: 0.2rem 0.6rem; font-size: 0.75rem; border-radius: 99px; }
   .score-form { display: flex; gap: 1rem; align-items: flex-end; }
+  
   .final-eval-section { margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); }
   .final-eval-section:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0;}
+  
+  .section-control-split {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .section-control-split h3 {
+    font-size: 1rem;
+    font-weight: 600;
+  }
+  .knowledge-label {
+    font-size: 1rem;
+    color: var(--text-primary);
+  }
+  .knowledge-label strong {
+    color: var(--primary-color);
+  }
+  .control-group {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
   .score-table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
   .score-table th, .score-table td { padding: 0.75rem; text-align: center; border-bottom: 1px solid var(--border-color); }
   .score-table th { font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); background-color: #f9fafb; }
@@ -108,23 +148,36 @@
   .revert-item { font-size: 0.875rem; }
   .revert-meta { color: var(--text-secondary); font-size: 0.75rem; }
   .revert-reason { margin-top: 0.25rem; }
-  /* ★追加: 差し戻し情報表示用のスタイル */
   .revert-info-box { background-color: #fff5f5; border: 1px solid var(--danger-color); color: #c81e1e; padding: 1.5rem; border-radius: var(--radius-md); margin-bottom: 1.5rem; }
   .revert-info-header { font-weight: 600; font-size: 1rem; margin-bottom: 1rem; }
   .internal-card { background-color: #f9fafb; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1rem; }
-  .toggle-container-vertical { display: flex; flex-direction: column; align-items: flex-start; gap: 0.5rem; }
   .input-with-button { display: flex; gap: 0.5rem; }
   .input-with-button .form-input { flex-grow: 1; }
   .input-with-button .btn { flex-shrink: 0; }
-  .ojt-final-check { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
 
-  /* OJT Toggle */
-  .toggle { position: relative; display: inline-block; width: 44px; height: 24px; }
-  .toggle input { opacity: 0; width: 0; height: 0; }
-  .toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px; }
-  .toggle-slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 2px; bottom: 2px; background-color: white; transition: .4s; border-radius: 50%; }
-  input:checked + .toggle-slider { background-color: var(--primary-color); }
-  input:checked + .toggle-slider:before { transform: translateX(20px); }
+  /* Toggle Button */
+  .btn-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.625rem 1.25rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    background-color: var(--surface-color);
+    color: var(--text-secondary);
+  }
+  .btn-toggle .text-on { display: none; }
+  .btn-toggle.is-active {
+    background-color: var(--primary-color);
+    color: #fff;
+    border-color: var(--primary-color);
+  }
+  .btn-toggle.is-active .text-off { display: none; }
+  .btn-toggle.is-active .text-on { display: inline; }
   
   /* Modal */
   .modal { display: none; position: fixed; inset: 0; background-color: rgba(0,0,0,0.5); backdrop-filter: blur(4px); z-index: 50; align-items: center; justify-content: center; }
