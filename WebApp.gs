@@ -136,17 +136,18 @@ function updatePostImproveScores(data) {
 function submitFinalEvaluation(data) {
   const { id, final_eval_comment, ojt_confirmed_final } = data;
   if (!id || !final_eval_comment) throw new Error("最終評価コメントは必須です。");
-  // ★修正: OJT実施確認を必須にする
+  // OJT確認必須のバリデーションを削除
   if (ojt_confirmed_final !== 'true') throw new Error("OJT実施状況の確認は必須です。");
-  
   const updateData = {
     'ステータス': '完了',
     '最終評価コメント': final_eval_comment,
     'OJT最終確認': ojt_confirmed_final === 'true',
-    '最終通知日時': new Date()
+    '最終通知日時': new Date(),
+    'グッドプラクティス': good_practice === 'true'
   };
   updateRowById(id, updateData);
   
+  // ★追加: 最終評価完了をChat通知
   const incident = getDataById(id);
   notifyFinalEvaluationComplete(incident);
   
@@ -173,12 +174,9 @@ function revert(data) {
     reason: reason,
     from_status: incident.status
   });
-  
-  // ★修正: 差し戻し理由を専用の列にも格納
   updateRowById(id, { 
     'ステータス': targetStatus, 
-    '差し戻し履歴': JSON.stringify(history),
-    '差し戻し理由': reason 
+    '差し戻し履歴': JSON.stringify(history) 
   });
 
   notifyRevert(incident, targetStatus, reason);

@@ -12,38 +12,31 @@
       --border-color: #d1d5db;
       --surface-color: #f9fafb;
     }
-    body { font-family: var(--font-sans); color: var(--text-primary); background-color: #f3f4f6; line-height: 1.6; }
+
+    /* 基本レイアウト */
     html, body {
-        height: 100%;
-        margin: 0;
-        padding: 0;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        background-color: #f3f4f6;
+      margin: 0;
+      padding: 0;
+      background-color: #f3f4f6;
     }
-    .page { 
-        width: 210mm; 
-        min-height: 297mm; 
-        padding: 20mm; 
-        margin: 20mm 0; /* ★修正: 上下のマージンを調整 */
-        background: white; 
-        box-shadow: 0 0 10px rgba(0,0,0,0.1); 
+    body {
+      font-family: var(--font-sans);
+      color: var(--text-primary);
+      line-height: 1.6;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
-    .info-grid div {
-        word-break: break-word; /* ★追加: 長い文字列がはみ出ないようにする */
+    .page {
+      width: 210mm;
+      min-height: 297mm;
+      padding: 20mm;
+      margin: 20mm 0;
+      background: white;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
-    /* (後略) */
-    @media print {
-      html, body {
-        display: block; /* ★追加: 印刷時はflex解除 */
-        height: auto;
-        background-color: #fff;
-      }
-      .page { margin: 0; box-shadow: none; border: none; width: 100%; min-height: initial; }
-      .no-print { display: none; }
-    }
-    .page { width: 210mm; min-height: 297mm; padding: 20mm; margin: 10mm auto; background: white; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+
+    /* レポート内要素 */
     .report-header { text-align: center; border-bottom: 2px solid var(--text-primary); padding-bottom: 1rem; margin-bottom: 2rem; }
     .report-title { font-size: 2rem; font-weight: bold; margin: 0; }
     .report-id { font-size: 1rem; color: var(--text-secondary); }
@@ -52,6 +45,9 @@
     .info-grid { display: grid; grid-template-columns: 150px 1fr; gap: 0.75rem; }
     .info-label { font-weight: bold; color: var(--text-secondary); }
     .pre-wrap { white-space: pre-wrap; font-family: var(--font-sans); }
+    .info-grid div, .info-grid a { word-break: break-word; } /* URLなどの長い文字列を改行 */
+
+    /* スコアテーブル */
     .score-table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
     .score-table th, .score-table td { border: 1px solid var(--border-color); padding: 0.75rem; text-align: center; }
     .score-table th { background-color: var(--surface-color); font-weight: bold; }
@@ -59,10 +55,12 @@
     .priority-高 { background-color: #fee2e2; color: #b91c1c; }
     .priority-中 { background-color: #ffedd5; color: #9a3412; }
     .priority-低 { background-color: #d1fae5; color: #065f46; }
+
+    /* フッター */
     .report-footer { text-align: center; margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--border-color); font-size: 0.875rem; color: var(--text-secondary); }
     
-    /* ★追加: 印刷ボタン用のスタイル */
-    .print-button-container { text-align: center; margin-bottom: 20px; }
+    /* 印刷ボタン */
+    .print-button-container { text-align: center; margin-bottom: 20px; width: 210mm; padding-top: 20px;}
     .print-button {
       display: inline-flex; align-items: center; gap: 8px;
       padding: 10px 20px; font-size: 16px; color: white;
@@ -71,9 +69,20 @@
     }
     .print-button:hover { background-color: #3730a3; }
 
+    /* 印刷時専用スタイル */
     @media print {
-      body { margin: 0; background-color: #fff; }
-      .page { margin: 0; box-shadow: none; border: none; width: 100%; min-height: initial; }
+      html, body {
+        display: block;
+        height: auto;
+        background-color: #fff;
+      }
+      .page {
+        margin: 0;
+        box-shadow: none;
+        border: none;
+        width: 100%;
+        min-height: initial;
+      }
       .no-print { display: none; }
     }
   </style>
@@ -123,7 +132,7 @@
             <div class="info-label">改善報告者</div><div><?= data.reporter ?></div>
             <div class="info-label">協力者</div><div><?= [data.team_member_2, data.team_member_3].filter(Boolean).join(', ') || '-' ?></div>
             <div class="info-label">費用</div><div><?= data.cost ? `¥${Number(data.cost).toLocaleString()}` : '-' ?></div>
-            <div class="info-label">工数</div><div><?= data.effort ? `${data.effort} 人日` : '-' ?></div>
+            <div class="info-label">工数</div><div><?= data.effort ? `${data.effort} 時間` : '-' ?></div>
             <div class="info-label">効果</div><div><?= data.effect ?></div>
             <div class="info-label">参考URL</div><div><?= data.reference_url ? `<a href="${data.reference_url}" target="_blank">${data.reference_url}</a>` : '-' ?></div>
         </div>

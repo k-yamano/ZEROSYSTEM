@@ -19,8 +19,12 @@ function onFormSubmit(e) {
     const details = formValues['ヒヤリハット内容']?.[0] || '';
     const id = newId();
     const ai = evalNewIncident(id, subject, details);
-    
-    const data = { 'ID': id, 'ステータス': 'リスク評価中', 'レポート': `${WEBAPP_BASE_URL}?id=${id}&view=report` };
+    const data = { 
+      'ID': id, 
+      'ステータス': 'リスク評価中', 
+      'レポート': `${WEBAPP_BASE_URL}?id=${id}&view=report`,
+      'アプリURL': `${WEBAPP_BASE_URL}?id=${id}` // アプリURLを追加
+    };
     if (ai && !ai.error) {
       Object.assign(data, {
         '頻度（AI評価）': ai?.scores?.frequency || 1,
