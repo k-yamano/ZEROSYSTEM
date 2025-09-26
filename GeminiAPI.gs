@@ -1,12 +1,28 @@
-/**
- * Evaluates a new incident using the Gemini API.
- * @param {string} id The incident ID.
- * @param {string} subject The subject of the incident.
- * @param {string} details The details of the incident.
- * @returns {object} The parsed JSON response from the API.
- */
+const PRICE_LIST = {
+  // Gemini 1.5 Flash
+  'gemini-1.5-flash-001': { input: 0.000125, output: 0.000375 },
+  'gemini-1.5-flash-latest': { input: 0.000125, output: 0.000375 },
+  // Gemini 1.0 Pro
+  'gemini-1.0-pro': { input: 0.000125, output: 0.000375 },
+  'gemini-1.0-pro-001': { input: 0.000125, output: 0.000375 },
+  // 他のモデルも必要に応じてここに追加
+};
+
+function extractJson_(text) {
+  const match = text.match(/```json\s*([\s\S]*?)\s*```|({[\s\S]*})/);
+  if (match) {
+    const jsonString = match[1] || match[2];
+    try {
+      return JSON.parse(jsonString);
+    } catch (e) {
+      Logger.log(`JSON Parse Error after extraction: ${e.message}`);
+      return null;
+    }
+  }
+  return null;
+}
+
 function evalNewIncident(id, subject, details) {
-  // ★修正: ユーザー提案の新しいプロンプト（加算方式）に更新
   const prompt = `
     以下のインシデント報告について、リスク評価を行ってください。
 
@@ -48,7 +64,7 @@ function evalNewIncident(id, subject, details) {
     以下から最も適切なものを1つ選択：
     墜落・転落, 転倒, 激突, 飛来・落下, 崩壊・倒壊, 挟まれ・巻き込まれ, 切れ・こすれ, 踏み抜き, おぼれ, 高温・低温の物との接触, 有害物質等との接触, 爆発, 火災, 交通事故（道路）, 交通事故（その他）, その他
   `;
-  return callGemini(id, prompt, 'evalNewIncident');
+  return callVertexAI(id, prompt, 'evalNewIncident');
 }
 
 /**
@@ -65,73 +81,105 @@ function evalImprovement(id, details) {
     改善内容: ${details}
     ---
   `;
-  return callGemini(id, prompt, 'evalImprovement');
+  return callVertexAI(id, prompt, 'evalImprovement');
 }
 
 /**
- * Common function to call the Gemini API with retry logic.
- * @param {string} id The incident ID for logging.
- * @param {string} prompt The prompt to send to the model.
- * @param {string} label A label for logging the token usage.
- * @returns {object} The parsed JSON response from the API.
+ * Vertex AI API を呼び出す共通関数
  */
-function callGemini(id, prompt, label) {
-  if (!API_KEY) throw new Error('API_KEY is not set.');
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${API_KEY}`;
-  const payload = {
-    contents: [{ parts: [{ text: prompt }] }],
-    generationConfig: { "responseMimeType": "application/json" }
+function callVertexAI(id, prompt, label) {
+  if (!GCP_PROJECT_ID) throw new Error('スクリプトプロパティに GCP_PROJECT_ID が設定されていません。');
+
+  const url = `https://${GCP_REGION}-aiplatform.googleapis.com/v1/projects/${GCP_PROJECT_ID}/locations/${GCP_REGION}/publishers/google/models/${GEMINI_MODEL}:generateContent`;
+
+  const options = {
+    method: 'post',
+    contentType: 'application/json',
+    muteHttpExceptions: true,
+    headers: {
+      'Authorization': 'Bearer ' + ScriptApp.getOAuthToken()
+    },
+    // ★★★ 最終修正 ★★★
+    // contentsオブジェクトに "role": "user" を追加
+    payload: JSON.stringify({
+      contents: [{
+        "role": "user", // この行を追加
+        "parts": [{ "text": prompt }]
+      }],
+      generationConfig: {
+        "responseMimeType": "application/json"
+      }
+    })
   };
-  const options = { method: 'post', contentType: 'application/json', payload: JSON.stringify(payload), muteHttpExceptions: true };
 
   for (let i = 0; i < 3; i++) {
     try {
       const res = UrlFetchApp.fetch(url, options);
       const responseCode = res.getResponseCode();
-      
+      const responseBody = res.getContentText();
+
       if (responseCode === 200) {
-        const json = JSON.parse(res.getContentText());
-        const usage = json.usageMetadata || { promptTokenCount: 0, candidatesTokenCount: 0 };
-        logTokens(id, usage.promptTokenCount, usage.candidatesTokenCount, label);
-        return JSON.parse(json.candidates[0].content.parts[0].text);
+        const json = JSON.parse(responseBody);
+        if (json.candidates && json.candidates[0].content && json.candidates[0].content.parts[0]) {
+          const responseText = json.candidates[0].content.parts[0].text;
+          const extractedJson = extractJson_(responseText);
+          if (extractedJson) {
+            logTokens(id, 0, 0, label); 
+            return extractedJson;
+          } else {
+            throw new Error('AIからの応答をJSONとして解釈できませんでした。');
+          }
+        } else {
+          throw new Error('AIからの応答が空でした。');
+        }
       }
 
-      if (responseCode >= 500 && i < 2) { // Retry on server errors
-        Logger.log(`Gemini API returned ${responseCode}. Retrying in 2 seconds... (Attempt ${i + 1})`);
+      Logger.log(`Vertex AI API Error. Status: ${responseCode}, Response: ${responseBody}`);
+      if (responseCode >= 500 && i < 2) {
         Utilities.sleep(2000);
         continue;
       }
-      
-      const errorContent = res.getContentText();
-      Logger.log(`Gemini API Error. Status: ${responseCode}, Response: ${errorContent}`);
       throw new Error(`API request failed with status ${responseCode}`);
-
     } catch (e) {
-      Logger.log(`Fetch Error during Gemini API call: ${e.message} (Attempt ${i + 1})`);
+      Logger.log(`Fetch Error during Vertex AI API call: ${e.message} (Attempt ${i + 1})`);
       if (i < 2) {
         Utilities.sleep(2000);
       } else {
-        throw new Error(`Failed to call Gemini API after 3 attempts. Last error: ${e.message}`);
+        throw new Error(`Failed to call Vertex AI API after 3 attempts. Last error: ${e.message}`);
       }
     }
   }
 }
 
-/**
- * Logs token usage to a spreadsheet.
- * @param {string} id The incident ID.
- * @param {number} inTokens The number of input tokens.
- * @param {number} outTokens The number of output tokens.
- * @param {string} label A label for the API call.
- */
 function logTokens(id, inTokens, outTokens, label) {
   try {
-    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(TOKEN_SHEET);
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(Token);
     if (!sheet) return;
-    const cost = (inTokens / 1000 * 0.000125) + (outTokens / 1000 * 0.000375); // Example pricing
-    sheet.appendRow([new Date(), id, inTokens, outTokens, cost.toFixed(6), label]);
+
+    // 現在のモデルの価格を取得
+    const prices = PRICE_LIST[GEMINI_MODEL];
+    let cost = 0;
+
+    if (prices) {
+      // 1000トークンあたりの価格で計算
+      const inputCost = (inTokens / 1000) * prices.input;
+      const outputCost = (outTokens / 1000) * prices.output;
+      cost = inputCost + outputCost;
+    } else {
+      Logger.log(`モデル '${GEMINI_MODEL}' の価格がPRICE_LISTに見つかりません。`);
+    }
+
+    // スプレッドシートに記録
+    sheet.appendRow([
+      new Date(),       // タイムスタンプ
+      id,               // 案件ID
+      inTokens,         // 入力トークン数
+      outTokens,        // 出力トークン数
+      cost.toFixed(6),  // 計算されたコスト（米ドル）
+      label,            // 処理ラベル
+      GEMINI_MODEL      // 使用したモデル名
+    ]);
   } catch (e) {
     Logger.log(`Token logging failed: ${e.message}`);
   }
 }
-
