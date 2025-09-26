@@ -153,7 +153,7 @@ function callVertexAI(id, prompt, label) {
 
 function logTokens(id, inTokens, outTokens, label) {
   try {
-    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(Token);
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(TOKEN_SHEET);
     if (!sheet) return;
 
     // 現在のモデルの価格を取得

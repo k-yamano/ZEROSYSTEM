@@ -81,7 +81,7 @@
                 </div>
                 <div class="form-grid-4">
                     <div class="form-group"><label class="form-label">担当部署</label><select name="department" class="form-input" required <?= !isRiskEvalActive ? 'disabled' : '' ?>><option value="">選択</option><? for(var i=0; i < departments.length; i++) { ?><option value="<?= departments[i] ?>" <?= data.department == departments[i] ? 'selected' : '' ?>><?= departments[i] ?></option><? } ?></select></div>
-                    <div class="form-group"><label class="form-label">担当者</label><input type="email" name="hopeful_evaluator" class="form-input" value="<?= data.hopeful_evaluator || '' ?>" required <?= !isRiskEvalActive ? 'disabled' : '' ?>></div>
+                    <div class="form-group"><label class="form-label">担当者</label><input type="email" name="hopeful_evaluator" class="form-input" value="" required <?= !isRiskEvalActive ? 'disabled' : '' ?>></div>
                     <div class="form-group"><label class="form-label">期限</label><input type="date" name="deadline" class="form-input" value="<?= data.deadline ? formatDate(data.deadline, 'yyyy-MM-dd') : '' ?>" <?= !isRiskEvalActive ? 'disabled' : '' ?>></div>
                     <div class="form-group"><label class="form-label">暫定予算</label><input type="text" name="provisional_budget" class="form-input" value="<?= data.provisional_budget || '' ?>" <?= !isRiskEvalActive ? 'disabled' : '' ?>></div>
                 </div>
