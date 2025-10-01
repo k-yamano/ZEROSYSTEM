@@ -26,9 +26,11 @@ function serverAction(action, data) {
  * 二次評価（リスク評価）を完了し、ステータスを「改善報告中」に更新します。
  */
 function submitSecondaryEvaluation(data){
-  const { id, department, hopeful_evaluator, secondary_eval_comment, deadline, provisional_budget, frequency_ai, likelihood_ai, severity_ai } = data;
-  if (!id || !department || !hopeful_evaluator || !secondary_eval_comment) {
-    throw new Error('担当部署、担当者、リスク評価コメントは必須です。');
+  // ★修正: hopeful_evaluator（担当者）を完全に削除
+  const { id, department, secondary_eval_comment, deadline, provisional_budget, frequency_ai, likelihood_ai, severity_ai } = data;
+  // ★修正: hopeful_evaluator（担当者）の必須チェックを削除
+  if (!id || !department || !secondary_eval_comment) {
+    throw new Error('担当部署、リスク評価コメントは必須です。');
   }
   
   updateScores({ id, frequency_ai, likelihood_ai, severity_ai });
@@ -36,7 +38,7 @@ function submitSecondaryEvaluation(data){
   const updateData = {
     'ステータス': '改善報告中',
     '担当部署': department,
-    '希望する評価者': hopeful_evaluator,
+    // ★修正: hopeful_evaluator（担当者）の保存処理を削除
     'リスク評価コメント': secondary_eval_comment,
     '期限': deadline,
     '暫定予算': provisional_budget
@@ -44,11 +46,9 @@ function submitSecondaryEvaluation(data){
   updateRowById(id, updateData);
   
   const incidentData = getDataById(id);
-  if (hopeful_evaluator) {
-    notifyImplementer(hopeful_evaluator, department, id, incidentData.subject, secondary_eval_comment);
-  }
+  notifyImplementer(department, id, incidentData.subject, secondary_eval_comment);
   
-  return "改善指示を送信し、担当者へ通知しました。";
+  return "改善指示を送信し、担当部署へ通知しました。";
 }
 
 /**
@@ -96,7 +96,6 @@ function submitImprovementReport(data) {
       '協力者2': data.team_member_3,
       'URL': data.reference_url, 
       
-      // ★修正: Config.gsで定義したヘッダー名で保存
       'OJT登録': ojt_registered === 'true', 
       'OJT実施': ojt_implemented === 'true',
       'OJTID': data.ojt_id,
@@ -158,17 +157,35 @@ function submitFinalEvaluation(data) {
   const updateData = {
     'ステータス': '完了',
     '最終評価コメント': final_eval_comment,
-    // ★修正: Config.gsで定義したヘッダー名で保存
     'OJT最終確認': ojt_confirmed_final === 'true',
     '最終通知日時': new Date(),
     'グッドプラクティス': good_practice === 'true'
   };
   updateRowById(id, updateData);
   
+  try {
+    const rowData = findRowById_(id);
+    if (rowData) {
+      const { sheet, headers, rowNum } = rowData;
+      const riskCol = headers.indexOf('リスクの見積もり（AI評価）') + 1;
+      const postRiskCol = headers.indexOf('改善後のリスクの見積もり') + 1;
+      const reductionCol = headers.indexOf('リスク低減値') + 1;
+
+      if (riskCol > 0 && postRiskCol > 0 && reductionCol > 0) {
+        const riskCell = sheet.getRange(rowNum, riskCol).getA1Notation();
+        const postRiskCell = sheet.getRange(rowNum, postRiskCol).getA1Notation();
+        sheet.getRange(rowNum, reductionCol).setFormula(`=IF(AND(ISNUMBER(${riskCell}), ISNUMBER(${postRiskCell})), ${riskCell} - ${postRiskCell}, "")`);
+      }
+    }
+  } catch(e) {
+    Logger.log(`リスク低減値の数式挿入に失敗: ${e.message}`);
+  }
+
   const incident = getDataById(id);
   notifyFinalEvaluationComplete(incident);
   
   return '最終評価を保存し、完了しました。';
+
 }
 
 /**
@@ -201,3 +218,4 @@ function revert(data) {
   notifyRevert(incident, targetStatus, reason);
   return `ステータスを「${targetStatus}」に差し戻しました。`;
 }
+

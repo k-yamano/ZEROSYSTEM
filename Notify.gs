@@ -23,16 +23,12 @@ function notifyEvaluator(evaluator, department, id, subject) {
 }
 
 /**
- * ★追加: 改善担当者へ改善指示を通知します。
+ * 改善担当部署へ改善指示をチャットで通知します。
  */
-function notifyImplementer(implementer, department, id, subject, comment) {
-  const title = `[要対応] 改善指示 (ID: ${id})`;
-  const body = `リスクアセスメントの改善指示が発行されました。内容を確認し、対応を行ってください。\n\nID: ${id}\n件名: ${subject}\n\n[評価者コメント]\n${comment}\n\n▼対応画面\n${WEBAPP_BASE_URL}?id=${id}`;
-  MailApp.sendEmail(implementer, title, body);
-
+function notifyImplementer(department, id, subject, comment) {
   const webhook = getWebhook(department);
   if (webhook) {
-    const chatMsg = `[要対応] ID: ${id} の改善指示が発行されました。\n担当者(${implementer})は内容を確認し、対応をお願いします。`;
+    const chatMsg = `[要対応] ID: ${id} の改善指示が発行されました。\n担当部署で内容を確認し、対応をお願いします。\n\n[評価者コメント]\n${comment}`;
     sendChat(webhook, chatMsg, id);
   }
 }
@@ -48,7 +44,7 @@ function notifyImprovementComplete(evaluator, id, subject) {
 }
 
 /**
- * ★追加: 最終評価完了をChat通知します。
+ * 最終評価完了をChat通知します。
  */
 function notifyFinalEvaluationComplete(incident) {
   const department = incident.department;
@@ -62,10 +58,10 @@ function notifyFinalEvaluationComplete(incident) {
 /**
  * 差し戻しを関係者へメールとChatで通知します。
  */
-function notifyRevert(incident, targetStatus, reason) {
+function revert(incident, targetStatus, reason) {
   let email = '';
   let msg = '';
-  if (targetStatus === '改善報告中') { // '差し戻し対応中' の一つ手前
+  if (targetStatus === '改善報告中') {
     email = incident.reporter;
     msg = `ID: ${incident.unique_id} の改善報告が差し戻されました。`;
   } else if (targetStatus === 'リスク評価中') {
@@ -106,3 +102,4 @@ function getWebhook(department) {
     return hooks[department] || hooks['default'] || null;
   } catch (e) { return null; }
 }
+

@@ -92,10 +92,6 @@ function setFormulas(sheet, row, headers) {
     sheet.getRange(postPriorityCell).setFormula(`=IF(${postRiskCell}>=15, "高", IF(${postRiskCell}>=8, "中", "低"))`);
   }
 
-  // リスク低減値
-  const riskReductionCell = getColNotation('リスク低減値'); // AY列
-  if (riskReductionCell && riskCell && postRiskCell) {
-    sheet.getRange(riskReductionCell).setFormula(`=IF(AND(ISNUMBER(${riskCell}), ISNUMBER(${postRiskCell})), ${riskCell} - ${postRiskCell}, "")`);
-  }
+  // リスク低減値の計算式はここには含めない
 }
 

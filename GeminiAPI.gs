@@ -1,3 +1,8 @@
+/**
+ * ★追加：Vertex AIのモデルごとの料金表（1000文字あたりの米ドル）
+ * 最新の料金はGoogle Cloudの公式ページでご確認ください。
+ * https://cloud.google.com/vertex-ai/pricing
+ */
 const PRICE_LIST = {
   // Gemini 1.5 Flash
   'gemini-1.5-flash-001': { input: 0.000125, output: 0.000375 },
@@ -8,6 +13,12 @@ const PRICE_LIST = {
   // 他のモデルも必要に応じてここに追加
 };
 
+
+/**
+ * AIの応答テキストからJSON部分のみを抽出するヘルパー関数
+ * @param {string} text - AIからの応答テキスト全体
+ * @returns {object|null} - 抽出されたJSONオブジェクト、または見つからない場合はnull
+ */
 function extractJson_(text) {
   const match = text.match(/```json\s*([\s\S]*?)\s*```|({[\s\S]*})/);
   if (match) {
@@ -22,6 +33,9 @@ function extractJson_(text) {
   return null;
 }
 
+/**
+ * Evaluates a new incident using the Gemini API.
+ */
 function evalNewIncident(id, subject, details) {
   const prompt = `
     以下のインシデント報告について、リスク評価を行ってください。
@@ -68,21 +82,53 @@ function evalNewIncident(id, subject, details) {
 }
 
 /**
+ * ★★★ 全面的に修正: 改善評価プロンプトの最適化 ★★★
  * Evaluates an improvement report using the Gemini API.
  */
-function evalImprovement(id, details) {
+function evalImprovement(id, improvementDetails) {
+  // 元のインシデントデータを取得して、評価の文脈をAIに提供する
+  const incidentData = getDataById(id);
+  if (!incidentData || !incidentData.subject) {
+    throw new Error(`ID ${id} の元データが見つかりませんでした。`);
+  }
+
   const prompt = `
-    以下のインシデント改善報告について、評価を行ってください。
-    回答は必ず日本語で、以下のキーを含むJSON形式で生成してください。
-    - "comment": 改善策に対するAIの講評
-    - "scores": { "frequency": 数値, "likelihood": 数値, "severity": 数値 }
-    頻度は[1,2,4]、可能性は[1,2,4,6]、重篤度は[1,3,6,10]から必ず選択してください。
-    ---
-    改善内容: ${details}
-    ---
+    以下のインシデントとその改善報告について、改善後のリスクを再評価してください。
+
+    # 当初のインシデント内容
+    ## 件名
+    ${incidentData.subject}
+
+    ## 詳細
+    ${incidentData.details}
+
+    # 実施された改善策
+    ${improvementDetails}
+
+    # 評価タスク
+    1. 実施された改善策が、当初の問題の根本原因に対して効果的か評価してください。
+    2. 改善後のリスク（頻度、可能性、重篤度）を再評価し、新しいスコアを付けてください。
+    3. 評価の理由や、もし残存リスクがあればそれを講評として記述してください。
+
+    # 回答形式
+    必ず日本語で、以下のキーを含むJSON形式で回答してください：
+    {
+      "comment": "改善策に対するAIの講評（根本原因への対応、残存リスクなど）",
+      "scores": { 
+        "frequency": "改善後の頻度スコア", 
+        "likelihood": "改善後の可能性スコア", 
+        "severity": "改善後の重篤度スコア" 
+      }
+    }
+
+    # 評価基準（スコア選択肢）
+    - 頻度 (frequency): [1, 2, 4]
+    - 可能性 (likelihood): [1, 2, 4, 6]
+    - 重篤度 (severity): [1, 3, 6, 10]
   `;
   return callVertexAI(id, prompt, 'evalImprovement');
 }
+
 
 /**
  * Vertex AI API を呼び出す共通関数
@@ -99,11 +145,9 @@ function callVertexAI(id, prompt, label) {
     headers: {
       'Authorization': 'Bearer ' + ScriptApp.getOAuthToken()
     },
-    // ★★★ 最終修正 ★★★
-    // contentsオブジェクトに "role": "user" を追加
     payload: JSON.stringify({
       contents: [{
-        "role": "user", // この行を追加
+        "role": "user",
         "parts": [{ "text": prompt }]
       }],
       generationConfig: {
@@ -124,7 +168,8 @@ function callVertexAI(id, prompt, label) {
           const responseText = json.candidates[0].content.parts[0].text;
           const extractedJson = extractJson_(responseText);
           if (extractedJson) {
-            logTokens(id, 0, 0, label); 
+            const usage = json.usageMetadata || { promptTokenCount: 0, candidatesTokenCount: 0 };
+            logTokens(id, usage.promptTokenCount, usage.candidatesTokenCount, label);
             return extractedJson;
           } else {
             throw new Error('AIからの応答をJSONとして解釈できませんでした。');
@@ -151,17 +196,18 @@ function callVertexAI(id, prompt, label) {
   }
 }
 
+/**
+ * Vertex AIの料金体系に合わせてトークン使用量を記録する関数
+ */
 function logTokens(id, inTokens, outTokens, label) {
   try {
     const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(TOKEN_SHEET);
     if (!sheet) return;
 
-    // 現在のモデルの価格を取得
     const prices = PRICE_LIST[GEMINI_MODEL];
     let cost = 0;
 
     if (prices) {
-      // 1000トークンあたりの価格で計算
       const inputCost = (inTokens / 1000) * prices.input;
       const outputCost = (outTokens / 1000) * prices.output;
       cost = inputCost + outputCost;
@@ -169,17 +215,17 @@ function logTokens(id, inTokens, outTokens, label) {
       Logger.log(`モデル '${GEMINI_MODEL}' の価格がPRICE_LISTに見つかりません。`);
     }
 
-    // スプレッドシートに記録
     sheet.appendRow([
-      new Date(),       // タイムスタンプ
-      id,               // 案件ID
-      inTokens,         // 入力トークン数
-      outTokens,        // 出力トークン数
-      cost.toFixed(6),  // 計算されたコスト（米ドル）
-      label,            // 処理ラベル
-      GEMINI_MODEL      // 使用したモデル名
+      new Date(),
+      id,
+      inTokens,
+      outTokens,
+      cost.toFixed(6),
+      label,
+      GEMINI_MODEL
     ]);
   } catch (e) {
     Logger.log(`Token logging failed: ${e.message}`);
   }
 }
+

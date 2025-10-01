@@ -21,7 +21,6 @@
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: var(--font-sans); background-color: var(--bg-color); color: var(--text-primary); font-size: 14px; line-height: 1.5; }
   .container { max-width: 1280px; margin: 0 auto; padding: 2rem; }
-
   /* Header */
   .main-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem; }
   .header-left { display: flex; align-items: center; gap: 1rem; }
@@ -67,25 +66,14 @@
   .form-input { width: 100%; padding: 0.625rem 1rem; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-size: 1rem; transition: all 0.2s; }
   .form-input:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px var(--primary-light); }
   .form-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
-  .form-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
+  .form-grid-4 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
   
-  .form-grid-ojt {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1.4fr;
-    gap: 1rem;
-    align-items: end; /* 子要素の高さを下端で揃える */
-  }
-  .form-grid-ojt .form-group {
-    margin-bottom: 0; /* form-groupのデフォルトマージンをリセット */
-  }
+  .form-grid-ojt {display: grid;grid-template-columns: 1fr 1fr 1.4fr;gap: 1rem;align-items: end; /* 子要素の高さを下端で揃える */}
+  .form-grid-ojt .form-group { margin-bottom: 0; /* form-groupのデフォルトマージンをリセット */}
 
 
-  @media(max-width: 768px) { 
-    .form-grid-3, .form-grid-4, .form-grid-ojt { grid-template-columns: repeat(2, 1fr); } 
-  }
-  @media(max-width: 640px) { 
-    .form-grid-3, .form-grid-4, .form-grid-ojt { grid-template-columns: 1fr; } 
-  }
+  @media(max-width: 768px) { .form-grid-3, .form-grid-4, .form-grid-ojt { grid-template-columns: repeat(2, 1fr); }  }
+  @media(max-width: 640px) { .form-grid-3, .form-grid-4, .form-grid-ojt { grid-template-columns: 1fr; }  }
 
   /* Buttons */
   .btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.625rem 1.25rem; border: 1px solid transparent; border-radius: var(--radius-md); font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: all 0.2s; text-decoration: none; }
@@ -99,6 +87,8 @@
   .btn:disabled { opacity: 0.5; cursor: not-allowed; }
   .btn-group { display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1rem; }
   .btn-icon { background: none; border: none; cursor: pointer; color: var(--text-secondary); }
+  .section-header {display: flex;justify-content: space-between;align-items: center;margin-bottom: 1rem;
+}
 
   /* Specific Components */
   .ai-evaluation { background-color: #f9fafb; border: 1px dashed var(--border-color); padding: 1.5rem; border-radius: var(--radius-md); margin-bottom: 1.5rem; }
@@ -112,27 +102,11 @@
   .final-eval-section { margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); }
   .final-eval-section:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0;}
   
-  .section-control-split {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  .section-control-split h3 {
-    font-size: 1rem;
-    font-weight: 600;
-  }
-  .knowledge-label {
-    font-size: 1rem;
-    color: var(--text-primary);
-  }
-  .knowledge-label strong {
-    color: var(--primary-color);
-  }
-  .control-group {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-  }
+  .section-control-split {display: flex;justify-content: space-between;align-items: center;}
+  .section-control-split h3 {font-size: 1rem;font-weight: 600;}
+  .knowledge-label {font-size: 1rem;color: var(--text-primary); }
+  .knowledge-label strong {color: var(--primary-color);}
+  .control-group {display: flex;align-items: center;gap: 0.75rem;}
 
   .score-table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
   .score-table th, .score-table td { padding: 0.75rem; text-align: center; border-bottom: 1px solid var(--border-color); }
@@ -155,7 +129,7 @@
   .input-with-button .form-input { flex-grow: 1; }
   .input-with-button .btn { flex-shrink: 0; }
 
-  /* Toggle Button */
+    /* Toggle Button */
   .btn-toggle {
     display: inline-flex;
     align-items: center;
@@ -178,6 +152,18 @@
   }
   .btn-toggle.is-active .text-off { display: none; }
   .btn-toggle.is-active .text-on { display: inline; }
+  
+  /* ★追加: disabled時のスタイル */
+  .btn-toggle:disabled {
+    background-color: #f3f4f6;
+    color: #9ca3af;
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
+  .btn-toggle:disabled.is-active {
+    background-color: #d1d5db;
+    border-color: #d1d5db;
+  }
   
   /* Modal */
   .modal { display: none; position: fixed; inset: 0; background-color: rgba(0,0,0,0.5); backdrop-filter: blur(4px); z-index: 50; align-items: center; justify-content: center; }

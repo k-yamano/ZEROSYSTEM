@@ -79,9 +79,8 @@
                   <label class="form-label">リスク評価コメント</label>
                   <textarea name="secondary_eval_comment" class="form-input" rows="4" required <?= !isRiskEvalActive ? 'disabled' : '' ?>><?= data.secondary_eval_comment || '' ?></textarea>
                 </div>
-                <div class="form-grid-4">
+                <div class="form-grid-3">
                     <div class="form-group"><label class="form-label">担当部署</label><select name="department" class="form-input" required <?= !isRiskEvalActive ? 'disabled' : '' ?>><option value="">選択</option><? for(var i=0; i < departments.length; i++) { ?><option value="<?= departments[i] ?>" <?= data.department == departments[i] ? 'selected' : '' ?>><?= departments[i] ?></option><? } ?></select></div>
-                    <div class="form-group"><label class="form-label">担当者</label><input type="email" name="hopeful_evaluator" class="form-input" value="" required <?= !isRiskEvalActive ? 'disabled' : '' ?>></div>
                     <div class="form-group"><label class="form-label">期限</label><input type="date" name="deadline" class="form-input" value="<?= data.deadline ? formatDate(data.deadline, 'yyyy-MM-dd') : '' ?>" <?= !isRiskEvalActive ? 'disabled' : '' ?>></div>
                     <div class="form-group"><label class="form-label">暫定予算</label><input type="text" name="provisional_budget" class="form-input" value="<?= data.provisional_budget || '' ?>" <?= !isRiskEvalActive ? 'disabled' : '' ?>></div>
                 </div>
@@ -122,7 +121,7 @@
                 </div>
                 <div class="form-grid-3">
                     <div class="form-group"><label class="form-label">費用</label><input type="number" name="cost" class="form-input" value="<?= data.cost || '' ?>" <?= !isImprovementActive ? 'disabled' : '' ?>></div>
-                    <div class="form-group"><label class="form-label">工数 (人日)</label><input type="number" step="0.1" name="effort" class="form-input" value="<?= data.effort || '' ?>" <?= !isImprovementActive ? 'disabled' : '' ?>></div>
+                    <div class="form-group"><label class="form-label">工数</label><input type="number" step="0.1" name="effort" class="form-input" value="<?= data.effort || '' ?>" <?= !isImprovementActive ? 'disabled' : '' ?>></div>
                     <div class="form-group"><label class="form-label">効果</label><input type="text" name="effect" class="form-input" value="<?= data.effect || '' ?>" <?= !isImprovementActive ? 'disabled' : '' ?>></div>
                 </div>
                 <div class="form-group">
@@ -142,14 +141,16 @@
                   <div class="form-grid-ojt">
                       <div class="form-group">
                            <label class="form-label">OJT登録</label>
-                           <button type="button" class="btn-toggle" data-target="ojt_registered">
+                           <!-- ★修正: disabled属性を追加 -->
+                           <button type="button" class="btn-toggle" data-target="ojt_registered" <?= !isImprovementActive ? 'disabled' : '' ?>>
                              <input type="hidden" name="ojt_registered" id="ojt_registered" value="<?= data.ojt_registered ? 'true' : 'false' ?>">
                              <span class="text-on">OJT登録済</span><span class="text-off">OJT未登録</span>
                            </button>
                       </div>
                       <div class="form-group">
                           <label class="form-label">OJT実施</label>
-                          <button type="button" class="btn-toggle" data-target="ojt_implemented">
+                          <!-- ★修正: disabled属性を追加 -->
+                          <button type="button" class="btn-toggle" data-target="ojt_implemented" <?= !isImprovementActive ? 'disabled' : '' ?>>
                             <input type="hidden" name="ojt_implemented" id="ojt_implemented" value="<?= data.ojt_implemented ? 'true' : 'false' ?>">
                             <span class="text-on">OJT実施済</span><span class="text-off">OJT未実施</span>
                           </button>
@@ -184,9 +185,17 @@
         <input type="hidden" name="id" value="<?= data.unique_id ?>">
         <? if(data.improvement_details) { ?>
         <div class="final-eval-section">
-          <h3>提出された改善報告</h3>
+          <div class="section-header">
+            <h3>提出された改善報告</h3>
+            <? if (data.reference_url) { ?>
+              <a href="<?= data.reference_url ?>" target="_blank" class="btn btn-secondary">参考URL</a>
+            <? } ?>
+          </div>
           <div class="info-grid">
             <div class="info-label">改善内容</div><div class="info-value pre-wrap"><?= data.improvement_details ?></div>
+            <div class="info-label">費用</div><div class="info-value"><?= data.cost ? `¥${Number(data.cost).toLocaleString()}` : '-' ?></div>
+            <div class="info-label">工数</div><div class="info-value"><?= data.effort ? `${data.effort} 時間` : '-' ?></div>
+            <div class="info-label">効果</div><div class="info-value"><?= data.effect || '-' ?></div>
           </div>
         </div>
         <div class="final-eval-section">
@@ -214,7 +223,8 @@
             <h3>OJT実施状況確認</h3>
             <div class="control-group">
                 <a href="https://script.google.com/a/macros/shabon.com/s/AKfycbz_4dkEmkyCndlrYdUUuqgzrioddSJ0givqmuh-LTviiD9wIV_jrgEIbqB5dycm6kem7A/exec" target="_blank" class="btn btn-secondary">OJT確認</a>
-                <button type="button" class="btn-toggle" data-target="ojt_confirmed_final">
+                <!-- ★修正: disabled属性を追加 -->
+                <button type="button" class="btn-toggle" data-target="ojt_confirmed_final" <?= !isFinalEvalActive ? 'disabled' : '' ?>>
                   <input type="hidden" name="ojt_confirmed_final" id="ojt_confirmed_final" value="<?= data.ojt_confirmed_final ? 'true' : 'false' ?>">
                   <span class="text-on">OJT実施を確認済</span><span class="text-off">OJT実施は未確認</span>
                 </button>
@@ -223,7 +233,8 @@
 
           <div class="final-eval-section section-control-split">
             <h3 class="knowledge-label"><strong>Good改善！</strong>みんなに共有する</h3>
-            <button type="button" class="btn-toggle" data-target="good_practice">
+            <!-- ★修正: disabled属性を追加 -->
+            <button type="button" class="btn-toggle" data-target="good_practice" <?= !isFinalEvalActive ? 'disabled' : '' ?>>
               <input type="hidden" name="good_practice" id="good_practice" value="<?= data.good_practice ? 'true' : 'false' ?>">
               <span class="text-on">ナレッジ登録済</span><span class="text-off">ナレッジ未登録</span>
             </button>
@@ -302,3 +313,4 @@
   <?!= include('JavaScript'); ?>
 </body>
 </html>
+
