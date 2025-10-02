@@ -25,10 +25,10 @@ function notifyEvaluator(evaluator, department, id, subject) {
 /**
  * 改善担当部署へ改善指示をチャットで通知します。
  */
-function notifyImplementer(department, id, subject, comment) {
+function notifyImplementer(department, id, hopeful_evaluator, comment) {
   const webhook = getWebhook(department);
   if (webhook) {
-    const chatMsg = `[要対応] ID: ${id} の改善指示が発行されました。\n担当部署で内容を確認し、対応をお願いします。\n\n[評価者コメント]\n${comment}`;
+    const chatMsg = `[要対応] ID：${id} の改善指示が発行されました。内容を確認し対応をお願いします。\n[評価者]${hopeful_evaluator}\n[評価者コメント]\n${comment}`;
     sendChat(webhook, chatMsg, id);
   }
 }

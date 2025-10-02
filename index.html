@@ -38,6 +38,8 @@
               <div class="info-grid">
                 <div class="info-label">件名</div><div class="info-value"><?= data.subject ?></div>
                 <div class="info-label">発見者</div><div class="info-value"><?= data.discoverer_email ?></div>
+                <!-- ★★★ ここを追加 ★★★ -->
+                <div class="info-label">評価者</div><div class="info-value"><?= data.hopeful_evaluator || '-' ?></div>
                 <div class="info-label">内容詳細</div><div class="info-value pre-wrap"><?= data.details ?></div>
               </div>
             </div>
@@ -192,7 +194,7 @@
           <div class="info-grid">
             <div class="info-label">改善内容</div><div class="info-value pre-wrap"><?= data.improvement_details ?></div>
             <div class="info-label">費用</div><div class="info-value"><?= data.cost ? `¥${Number(data.cost).toLocaleString()}` : '-' ?></div>
-            <div class="info-label">工数</div><div class="info-value"><?= data.effort ? `${data.effort} ` : '-' ?></div>
+            <div class="info-label">工数</div><div class="info-value"><?= data.effort ? `${data.effort}` : '-' ?></div>
             <div class="info-label">効果</div><div class="info-value"><?= data.effect || '-' ?></div>
           </div>
         </div>
