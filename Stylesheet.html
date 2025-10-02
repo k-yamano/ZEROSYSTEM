@@ -73,11 +73,36 @@
   .form-input:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px var(--primary-light); }
   .form-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
   
-  .form-grid-ojt {display: grid;grid-template-columns: 1fr 1fr 1.4fr;gap: 1rem;align-items: end; /* 子要素の高さを下端で揃える */}
-  .form-grid-ojt .form-group { margin-bottom: 0; /* form-groupのデフォルトマージンをリセット */}
+  /* ★★★ OJT関連のスタイルを修正・追加 ★★★ */
+  .form-grid-ojt {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1.4fr;
+    gap: 1rem;
+  }
+  .ojt-item .form-label {
+    margin-bottom: 0.5rem;
+  }
+  .label-note {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-weight: 400;
+  }
+  .ojt-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .ojt-controls .btn-toggle, .ojt-controls .btn {
+    width: 100%; /* ボタンの幅を揃える */
+  }
 
-  @media(max-width: 768px) { .form-grid-3, .form-grid-ojt { grid-template-columns: repeat(2, 1fr); }  }
-  @media(max-width: 640px) { .form-grid-3, .form-grid-ojt { grid-template-columns: 1fr; }  }
+
+  @media(max-width: 768px) { 
+    .form-grid-3, .form-grid-ojt { grid-template-columns: repeat(2, 1fr); }  
+  }
+  @media(max-width: 640px) { 
+    .form-grid-3, .form-grid-ojt { grid-template-columns: 1fr; }  
+  }
 
   /* Buttons */
   .btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.625rem 1.25rem; border: 1px solid transparent; border-radius: var(--radius-md); font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: all 0.2s; text-decoration: none; }
