@@ -29,7 +29,6 @@ function doGet(e) {
 
     // 通常の操作画面
     const template = HtmlService.createTemplateFromFile('index');
-    // ★★★ HTMLテンプレート側で 'data' という変数名が使えるように設定 ★★★
     template.data = incidentData;
     
     // 部署のリストをテンプレートに渡す
@@ -56,13 +55,15 @@ function include(filename) {
   return HtmlService.createHtmlOutputFromFile(filename).getContent();
 }
 
+
 /**
+ * ★★★ HTMLテンプレート専用の日付フォーマット関数 ★★★
  * 日付オブジェクトを指定された書式の文字列に変換します。
  * @param {Date | string} date - 変換する日付
  * @param {string} format - 出力する日付の書式
  * @returns {string} - フォーマットされた日付文字列
  */
-function formatDate(date, format = 'yyyy/MM/dd HH:mm') {
+function formatDateForHtml(date, format = 'yyyy/MM/dd HH:mm') {
     if(!date) return '';
     try {
       return Utilities.formatDate(new Date(date), 'JST', format);
@@ -70,3 +71,4 @@ function formatDate(date, format = 'yyyy/MM/dd HH:mm') {
       return ''; // 無効な日付の場合は空文字を返す
     }
 }
+

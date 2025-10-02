@@ -107,7 +107,8 @@
         <h2 class="section-title">1. 基本情報</h2>
         <div class="info-grid">
           <div class="info-label">件名</div><div><?= data.subject ?></div>
-          <div class="info-label">発見日時</div><div><?= formatDate(data.timestamp) ?></div>
+          <!-- ★修正: formatDate -> formatDateForHtml -->
+          <div class="info-label">発見日時</div><div><?= formatDateForHtml(data.timestamp) ?></div>
           <div class="info-label">発見者</div><div><?= data.discoverer_email ?></div>
           <div class="info-label">内容詳細</div><div class="pre-wrap"><?= data.details ?></div>
           <div class="info-label">リスク評価者</div><div><?= data.hopeful_evaluator ?></div>
@@ -151,21 +152,12 @@
     </main>
 
     <footer class="report-footer">
-      ZEROSYSTEM | 出力日時: <?= formatDate(new Date()) ?>
+      <!-- ★修正: formatDate -> formatDateForHtml -->
+      ZEROSYSTEM | 出力日時: <?= formatDateForHtml(new Date()) ?>
     </footer>
   </div>
    <script>
-    // ユーティリティ関数（GAS側と重複するが、レポート単体でも機能するように）
-    function formatDate(dateString, format = 'yyyy/MM/dd HH:mm') {
-      if (!dateString) return '';
-      try {
-        const date = new Date(dateString);
-        if (isNaN(date.getTime())) return dateString;
-        return date.toLocaleString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false });
-      } catch(e) {
-        return dateString;
-      }
-    }
+    // formatDateForHtml関数はサーバーサイドで定義されているため、ここでは不要
    </script>
 </body>
 </html>

@@ -58,7 +58,7 @@ function notifyFinalEvaluationComplete(incident) {
 /**
  * 差し戻しを関係者へメールとChatで通知します。
  */
-function revert(incident, targetStatus, reason) {
+function notifyRevert(incident, targetStatus, reason) { // ★修正: revert関数名をnotifyRevertに変更
   let email = '';
   let msg = '';
   if (targetStatus === '改善報告中') {
@@ -102,4 +102,3 @@ function getWebhook(department) {
     return hooks[department] || hooks['default'] || null;
   } catch (e) { return null; }
 }
-
