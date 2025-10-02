@@ -26,9 +26,7 @@ function serverAction(action, data) {
  * 二次評価（リスク評価）を完了し、ステータスを「改善報告中」に更新します。
  */
 function submitSecondaryEvaluation(data){
-  // ★修正: hopeful_evaluator（担当者）を完全に削除
   const { id, department, secondary_eval_comment, deadline, provisional_budget, frequency_ai, likelihood_ai, severity_ai } = data;
-  // ★修正: hopeful_evaluator（担当者）の必須チェックを削除
   if (!id || !department || !secondary_eval_comment) {
     throw new Error('担当部署、リスク評価コメントは必須です。');
   }
@@ -38,7 +36,6 @@ function submitSecondaryEvaluation(data){
   const updateData = {
     'ステータス': '改善報告中',
     '担当部署': department,
-    // ★修正: hopeful_evaluator（担当者）の保存処理を削除
     'リスク評価コメント': secondary_eval_comment,
     '期限': deadline,
     '暫定予算': provisional_budget
@@ -46,7 +43,9 @@ function submitSecondaryEvaluation(data){
   updateRowById(id, updateData);
   
   const incidentData = getDataById(id);
-  notifyImplementer(department, id, incidentData.subject, secondary_eval_comment);
+  // ★★★ 修正: 正しい引数を渡す ★★★
+  // 第3引数に評価者のメールアドレス (incidentData.hopeful_evaluator) を渡す
+  notifyImplementer(department, id, incidentData.hopeful_evaluator, incidentData.subject, secondary_eval_comment);
   
   return "改善指示を送信し、担当部署へ通知しました。";
 }
@@ -112,6 +111,7 @@ function submitImprovementReport(data) {
   updateRowById(id, updateData);
   
   const incident = getDataById(id);
+  // 評価者への通知は残す
   if (incident.hopeful_evaluator) {
     notifyImprovementComplete(incident.hopeful_evaluator, id, incident.subject);
   }
@@ -218,4 +218,3 @@ function revert(data) {
   notifyRevert(incident, targetStatus, reason);
   return `ステータスを「${targetStatus}」に差し戻しました。`;
 }
-

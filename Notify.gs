@@ -25,10 +25,12 @@ function notifyEvaluator(evaluator, department, id, subject) {
 /**
  * 改善担当部署へ改善指示をチャットで通知します。
  */
-function notifyImplementer(department, id, hopeful_evaluator, comment) {
+// ★★★ 修正: 引数を正しく受け取る ★★★
+function notifyImplementer(department, id, hopeful_evaluator, subject, comment) {
   const webhook = getWebhook(department);
   if (webhook) {
-    const chatMsg = `[要対応] ID：${id} の改善指示が発行されました。内容を確認し対応をお願いします。\n[評価者]${hopeful_evaluator}\n[評価者コメント]\n${comment}`;
+    // ★★★ 修正: チャットメッセージに評価者アドレスを含める ★★★
+    const chatMsg = `[要対応]　改善指示が発行されました。内容を確認し対応をお願いします。\nID：${id} (${subject})\n評価者： ${hopeful_evaluator}\n評価者コメント：\n${comment}`;
     sendChat(webhook, chatMsg, id);
   }
 }
@@ -56,15 +58,16 @@ function notifyFinalEvaluationComplete(incident) {
 }
 
 /**
- * 差し戻しを関係者へメールとChatで通知します。
+ * 差し戻しを関係者へ通知します。
  */
-function notifyRevert(incident, targetStatus, reason) { // ★修正: revert関数名をnotifyRevertに変更
+function notifyRevert(incident, targetStatus, reason) {
   let email = '';
   let msg = '';
   if (targetStatus === '改善報告中') {
-    email = incident.reporter;
+    email = incident.reporter; // 改善報告者
     msg = `ID: ${incident.unique_id} の改善報告が差し戻されました。`;
   } else if (targetStatus === 'リスク評価中') {
+    // 評価者が差し戻すことはUI上ないが、念のため残す
     email = incident.hopeful_evaluator;
     msg = `ID: ${incident.unique_id} のリスク評価が差し戻されました。`;
   }
@@ -78,7 +81,7 @@ function notifyRevert(incident, targetStatus, reason) { // ★修正: revert関�
   const department = incident.department;
   const webhook = getWebhook(department);
   if (webhook) {
-    const chatMsg = `[差し戻し] ${msg}\n担当者は内容を確認し、再対応をお願いします。\n理由: ${reason}`;
+    const chatMsg = `[差し戻し] ${msg}\n担当部署は内容を確認し、再対応をお願いします。\n理由: ${reason}`;
     sendChat(webhook, chatMsg, incident.unique_id);
   }
 }
