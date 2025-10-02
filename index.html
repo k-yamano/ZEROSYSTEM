@@ -32,7 +32,6 @@
           <div class="card">
             <div class="card-header">
               <h2 class="card-title">基本情報</h2>
-              <!-- ★修正: formatDate -> formatDateForHtml -->
               <span class="timestamp"><?= formatDateForHtml(data.timestamp) ?> 発見</span>
             </div>
             <div class="card-body">
@@ -80,10 +79,8 @@
                   <label class="form-label">リスク評価コメント</label>
                   <textarea name="secondary_eval_comment" class="form-input" rows="4" required <?= !isRiskEvalActive ? 'disabled' : '' ?>><?= data.secondary_eval_comment || '' ?></textarea>
                 </div>
-                <div class="form-grid-4">
+                <div class="form-grid-3">
                     <div class="form-group"><label class="form-label">担当部署</label><select name="department" class="form-input" required <?= !isRiskEvalActive ? 'disabled' : '' ?>><option value="">選択</option><? for(var i=0; i < departments.length; i++) { ?><option value="<?= departments[i] ?>" <?= data.department == departments[i] ? 'selected' : '' ?>><?= departments[i] ?></option><? } ?></select></div>
-                    <div class="form-group"><label class="form-label">担当者</label><input type="email" name="hopeful_evaluator" class="form-input" value="" required <?= !isRiskEvalActive ? 'disabled' : '' ?>></div>
-                    <!-- ★修正: formatDate -> formatDateForHtml -->
                     <div class="form-group"><label class="form-label">期限</label><input type="date" name="deadline" class="form-input" value="<?= data.deadline ? formatDateForHtml(data.deadline, 'yyyy-MM-dd') : '' ?>" <?= !isRiskEvalActive ? 'disabled' : '' ?>></div>
                     <div class="form-group"><label class="form-label">暫定予算</label><input type="text" name="provisional_budget" class="form-input" value="<?= data.provisional_budget || '' ?>" <?= !isRiskEvalActive ? 'disabled' : '' ?>></div>
                 </div>
@@ -109,7 +106,6 @@
               <div class="revert-info-box">
                   <div class="revert-info-header">差し戻し情報</div>
                   <div class="info-grid">
-                      <!-- ★修正: formatDate -> formatDateForHtml -->
                       <div class="info-label">日時</div><div class="info-value"><?= formatDateForHtml(lastRevert.timestamp) ?></div>
                       <div class="info-label">担当者</div><div class="info-value"><?= lastRevert.reverted_by ?></div>
                       <div class="info-label">理由</div><div class="info-value pre-wrap"><?= lastRevert.reason ?></div>
@@ -125,8 +121,8 @@
                 </div>
                 <div class="form-grid-3">
                     <div class="form-group"><label class="form-label">費用</label><input type="number" name="cost" class="form-input" value="<?= data.cost || '' ?>" <?= !isImprovementActive ? 'disabled' : '' ?>></div>
-                    <div class="form-group"><label class="form-label">工数 (時間)</label><input type="number" step="0.1" name="effort" class="form-input" value="<?= data.effort || '' ?>" <?= !isImprovementActive ? 'disabled' : '' ?>></div>
-                    <div class="form-group"><label class="form-label">効果(ROI)</label><input type="text" name="effect" class="form-input" value="<?= data.effect || '' ?>" <?= !isImprovementActive ? 'disabled' : '' ?>></div>
+                    <div class="form-group"><label class="form-label">工数</label><input type="number" step="0.1" name="effort" class="form-input" value="<?= data.effort || '' ?>" <?= !isImprovementActive ? 'disabled' : '' ?>></div>
+                    <div class="form-group"><label class="form-label">効果</label><input type="text" name="effect" class="form-input" value="<?= data.effect || '' ?>" <?= !isImprovementActive ? 'disabled' : '' ?>></div>
                 </div>
                 <div class="form-group">
                   <label class="form-label">チームメンバー</label>
@@ -270,6 +266,28 @@
               </table>
           </div>
         </div>
+
+        <div class="card">
+          <div class="card-header"><h3 class="card-title">評価指標</h3></div>
+          <div class="card-body">
+            <div class="evaluation-criteria">
+              <h4>スコア基準</h4>
+              <ul>
+                <li><strong>頻度:</strong> (1)稀, (2)時々, (4)頻繁</li>
+                <li><strong>可能性:</strong> (1)極めて低い, (2)低い, (4)中程度, (6)高い</li>
+                <li><strong>重篤度:</strong> (1)軽微, (3)中程度, (6)重大, (10)致命的</li>
+              </ul>
+              <h4>総合リスクレベル (合計点)</h4>
+              <ul>
+                <li><strong>ランクⅣ (12-20点):</strong> 直ちに解決すべき問題</li>
+                <li><strong>ランクⅢ (9-11点):</strong> 重大な問題</li>
+                <li><strong>ランクⅡ (6-8点):</strong> 多少問題がある</li>
+                <li><strong>ランクⅠ (0-5点):</strong> 必要に応じて対応</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
         <? if (data.revert_history && JSON.parse(data.revert_history).length > 0) { ?>
         <div class="card">
             <div class="card-header"><h3 class="card-title">差し戻し履歴</h3></div>
@@ -278,7 +296,6 @@
                 <? var history = JSON.parse(data.revert_history); ?>
                 <? for(var i = 0; i < history.length; i++) { ?>
                   <div class="revert-item">
-                    <!-- ★修正: formatDate -> formatDateForHtml -->
                     <div class="revert-meta"><?= formatDateForHtml(history[i].timestamp) ?> by <?= history[i].reverted_by ?></div>
                     <div class="revert-reason"><?= history[i].reason ?></div>
                   </div>
@@ -314,3 +331,4 @@
   <?!= include('JavaScript'); ?>
 </body>
 </html>
+

@@ -10,6 +10,8 @@ const PRICE_LIST = {
   // Gemini 1.0 Pro
   'gemini-1.0-pro': { input: 0.000125, output: 0.000375 },
   'gemini-1.0-pro-001': { input: 0.000125, output: 0.000375 },
+  'gemini-2.0-flash': { input: 0.000125, output: 0.000375 }, // 仮の価格
+  'gemini-2.0-flash-lite': { input: 0.000125, output: 0.000375 }, // 仮の価格
   // 他のモデルも必要に応じてここに追加
 };
 
@@ -102,13 +104,17 @@ function evalImprovement(id, improvementDetails) {
     ## 詳細
     ${incidentData.details}
 
+    ## 当初の重篤度スコア
+    ${incidentData.severity_ai}
+
     # 実施された改善策
     ${improvementDetails}
 
     # 評価タスク
     1. 実施された改善策が、当初の問題の根本原因に対して効果的か評価してください。
-    2. 改善後のリスク（頻度、可能性、重篤度）を再評価し、新しいスコアを付けてください。
-    3. 評価の理由や、もし残存リスクがあればそれを講評として記述してください。
+    2. 改善後の「頻度」と「可能性」のリスクを再評価し、新しいスコアを付けてください。
+    3. **「重篤度」は原則として当初のスコア(${incidentData.severity_ai})を維持してください。**改善策が「もし事故が起きても被害が軽減される」ような内容である場合に限り、重篤度を下げることができます。
+    4. 評価の理由や、もし残存リスクがあればそれを講評として記述してください。
 
     # 回答形式
     必ず日本語で、以下のキーを含むJSON形式で回答してください：
@@ -228,4 +234,3 @@ function logTokens(id, inTokens, outTokens, label) {
     Logger.log(`Token logging failed: ${e.message}`);
   }
 }
-
