@@ -39,13 +39,7 @@
   /* Main Layout */
   .main-content { display: grid; grid-template-columns: 2fr 1fr; gap: 2rem; align-items: start; }
   @media(max-width: 1024px) { .main-content { grid-template-columns: 1fr; } }
-  .sidebar { 
-    position: sticky; 
-    top: 2rem; 
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem; /* カード間のスペース */
-  }
+  .sidebar { position: sticky; top: 2rem; }
   
   /* Timeline */
   .timeline { display: flex; flex-direction: column; gap: 1.5rem; }
@@ -73,36 +67,19 @@
   .form-input:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px var(--primary-light); }
   .form-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
   
-  /* ★★★ OJT関連のスタイルを修正・追加 ★★★ */
   .form-grid-ojt {
     display: grid;
-    grid-template-columns: 1fr 1fr 1.4fr;
+    grid-template-columns: repeat(3, 1fr);
     gap: 1rem;
+    align-items: end;
   }
-  .ojt-item .form-label {
-    margin-bottom: 0.5rem;
-  }
-  .label-note {
-    font-size: 0.75rem;
-    color: var(--text-secondary);
-    font-weight: 400;
-  }
-  .ojt-controls {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-  .ojt-controls .btn-toggle, .ojt-controls .btn {
-    width: 100%; /* ボタンの幅を揃える */
-  }
+  .ojt-item { display: flex; flex-direction: column; gap: 0.5rem; }
+  .ojt-controls { display: flex; gap: 0.5rem; align-items: center; }
+  .label-note { font-size: 0.75rem; color: var(--text-secondary); margin-left: 0.25rem; }
 
 
-  @media(max-width: 768px) { 
-    .form-grid-3, .form-grid-ojt { grid-template-columns: repeat(2, 1fr); }  
-  }
-  @media(max-width: 640px) { 
-    .form-grid-3, .form-grid-ojt { grid-template-columns: 1fr; }  
-  }
+  @media(max-width: 768px) { .form-grid-3, .form-grid-ojt { grid-template-columns: repeat(2, 1fr); }  }
+  @media(max-width: 640px) { .form-grid-3, .form-grid-ojt { grid-template-columns: 1fr; }  }
 
   /* Buttons */
   .btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.625rem 1.25rem; border: 1px solid transparent; border-radius: var(--radius-md); font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: all 0.2s; text-decoration: none; }
@@ -116,7 +93,8 @@
   .btn:disabled { opacity: 0.5; cursor: not-allowed; }
   .btn-group { display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1rem; }
   .btn-icon { background: none; border: none; cursor: pointer; color: var(--text-secondary); }
-  .section-header {display: flex;justify-content: space-between;align-items: center;margin-bottom: 1rem;}
+  .section-header {display: flex;justify-content: space-between;align-items: center;margin-bottom: 1rem;
+}
 
   /* Specific Components */
   .ai-evaluation { background-color: #f9fafb; border: 1px dashed var(--border-color); padding: 1.5rem; border-radius: var(--radius-md); margin-bottom: 1.5rem; }
@@ -131,10 +109,38 @@
   .final-eval-section:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0;}
   
   .section-control-split {display: flex;justify-content: space-between;align-items: center;}
-  .section-control-split h3 {font-size: 1rem;font-weight: 600;}
   .knowledge-label {font-size: 1rem;color: var(--text-primary); }
   .knowledge-label strong {color: var(--primary-color);}
   .control-group {display: flex;align-items: center;gap: 0.75rem;}
+  
+  /* ★★★ 最終評価のOJTセクション用レイアウト ★★★ */
+  .ojt-final-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem; /* タイトルと内容の間隔 */
+  }
+  .ojt-final-section h3 {
+    font-size: 1rem;
+    font-weight: 600;
+  }
+  .ojt-final-details {
+    display: grid;
+    grid-template-columns: 1fr 2fr; /* IDと内容の比率 */
+    gap: 1.5rem;
+    margin-bottom: 1rem;
+  }
+  .ojt-final-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .ojt-final-controls {
+    display: flex;
+    justify-content: flex-end; /* 右寄せ */
+    align-items: center;
+    gap: 0.75rem;
+  }
+
 
   .score-table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
   .score-table th, .score-table td { padding: 0.75rem; text-align: center; border-bottom: 1px solid var(--border-color); }
@@ -143,11 +149,9 @@
   .score-value { font-weight: 700; }
   .reduction-value { color: var(--success-color); }
   .priority-badge { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 12px; font-weight: 600; }
-  .priority-Ⅳ { background-color: #fee2e2; color: #b91c1c; } /* ランクⅣ: 高 */
-  .priority-Ⅲ { background-color: #ffedd5; color: #9a3412; } /* ランクⅢ: 中 */
-  .priority-Ⅱ { background-color: #d1fae5; color: #065f46; } /* ランクⅡ: 低 */
-  .priority-Ⅰ { background-color: #e5e7eb; color: #4b5563; } /* ランクⅠ: さらに低い */
-
+  .priority-高 { background-color: #fee2e2; color: #b91c1c; }
+  .priority-中 { background-color: #ffedd5; color: #9a3412; }
+  .priority-低 { background-color: #d1fae5; color: #065f46; }
   .revert-history-list { display: flex; flex-direction: column; gap: 1rem; }
   .revert-item { font-size: 0.875rem; }
   .revert-meta { color: var(--text-secondary); font-size: 0.75rem; }
@@ -214,19 +218,19 @@
     margin-bottom: 0.5rem;
   }
   .evaluation-criteria h4:first-child {
-      margin-top: 0;
+    margin-top: 0;
   }
   .evaluation-criteria ul {
-      list-style-type: none;
-      padding-left: 0;
-      font-size: 0.875rem;
-      color: var(--text-secondary);
+    list-style: none;
+    padding-left: 0;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
   }
   .evaluation-criteria li {
-      margin-bottom: 0.25rem;
+    margin-bottom: 0.25rem;
   }
   .evaluation-criteria strong {
-      color: var(--text-primary);
+    color: var(--text-primary);
   }
 </style>
 

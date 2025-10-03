@@ -5,100 +5,275 @@
   <title>リスクアセスメントレポート - <?= data.unique_id ?></title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    :root {
-      --font-sans: 'Helvetica Neue', 'Arial', 'Hiragino Sans', 'Meiryo', sans-serif;
-      --text-primary: #111827;
-      --text-secondary: #4b5563;
-      --border-color: #d1d5db;
-      --surface-color: #f9fafb;
-    }
+:root {
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", "Helvetica Neue", Arial, "Hiragino Sans", "Meiryo", sans-serif;
+  --text: #0f172a;
+  --muted: #475569;
+  --border: #e2e8f0;
+  --surface: #ffffff;
+  --surface-2: #f8fafc;
+  --brand: #2563eb;
+  --accent: #0ea5e9;
+}
 
-    /* 基本レイアウト */
-    html, body {
-      margin: 0;
-      padding: 0;
-      background-color: #f3f4f6;
-    }
-    body {
-      font-family: var(--font-sans);
-      color: var(--text-primary);
-      line-height: 1.6;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    .page {
-      width: 210mm;
-      min-height: 297mm;
-      padding: 20mm;
-      margin: 20mm 0;
-      background: white;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
+/* base */
+html, body {
+  margin: 0;
+  padding: 0;
+  background: #0b1220; /* dark gradient band for "hero" feel */
+  background: linear-gradient(180deg, #0b1220 0%, #0b1220 160px, #f1f5f9 160px, #f1f5f9 100%);
+  color: var(--text);
+  font-family: var(--font-sans);
+  line-height: 1.65;
+}
 
-    /* レポート内要素 */
-    .report-header { text-align: center; border-bottom: 2px solid var(--text-primary); padding-bottom: 1rem; margin-bottom: 2rem; }
-    .report-title { font-size: 2rem; font-weight: bold; margin: 0; }
-    .report-id { font-size: 1rem; color: var(--text-secondary); }
-    .section { margin-bottom: 2rem; page-break-inside: avoid; }
-    .section-title { font-size: 1.25rem; font-weight: bold; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 1rem; }
-    .info-grid { display: grid; grid-template-columns: 150px 1fr; gap: 0.75rem; }
-    .info-label { font-weight: bold; color: var(--text-secondary); }
-    .pre-wrap { white-space: pre-wrap; font-family: var(--font-sans); }
-    .info-grid div, .info-grid a { word-break: break-word; } /* URLなどの長い文字列を改行 */
+/* container */
+.wrapper {
+  display: flex;
+  justify-content: center;
+  padding: 24px;
+}
 
-    /* スコアテーブル */
-    .score-table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
-    .score-table th, .score-table td { border: 1px solid var(--border-color); padding: 0.75rem; text-align: center; }
-    .score-table th { background-color: var(--surface-color); font-weight: bold; }
-    .priority-badge { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 12px; font-weight: 600; }
-    .priority-高 { background-color: #fee2e2; color: #b91c1c; }
-    .priority-中 { background-color: #ffedd5; color: #9a3412; }
-    .priority-低 { background-color: #d1fae5; color: #065f46; }
+/* page card for screen (A4 width) */
+.page {
+  width: 100%;
+  max-width: 210mm;          /* A4 width for screen */
+  background: var(--surface);
+  border-radius: 16px;
+  box-shadow: 0 12px 30px rgba(2, 6, 23, 0.16);
+  overflow: hidden;
+  /* internal padding; print margins will be controlled by @page */
+  padding: 18mm;
+}
 
-    /* フッター */
-    .report-footer { text-align: center; margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--border-color); font-size: 0.875rem; color: var(--text-secondary); }
-    
-    /* 印刷ボタン */
-    .print-button-container { text-align: center; margin-bottom: 20px; width: 210mm; padding-top: 20px;}
-    .print-button {
-      display: inline-flex; align-items: center; gap: 8px;
-      padding: 10px 20px; font-size: 16px; color: white;
-      background-color: #4f46e5; border: none; border-radius: 8px;
-      cursor: pointer;
-    }
-    .print-button:hover { background-color: #3730a3; }
+/* header */
+.report-header {
+  display: grid;
+  gap: 8px;
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 16px;
+  margin-bottom: 24px;
+}
+.report-title {
+  margin: 0;
+  font-size: 26px;
+  letter-spacing: 0.2px;
+  font-weight: 800;
+}
+.report-id {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+}
 
-    /* 印刷時専用スタイル */
-    @media print {
-      html, body {
-        display: block;
-        height: auto;
-        background-color: #fff;
-      }
-      .page {
-        margin: 0;
-        box-shadow: none;
-        border: none;
-        width: 100%;
-        min-height: initial;
-      }
-      .no-print { display: none; }
-    }
-  </style>
+/* sections */
+.section {
+  margin-bottom: 20px;
+  break-inside: avoid;
+}
+.section-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0 0 12px 0;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+.info-grid {
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  gap: 10px 14px;
+}
+.info-label {
+  color: var(--muted);
+  font-weight: 700;
+}
+.pre-wrap { white-space: pre-wrap; }
+
+/* table */
+.score-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+  word-break: break-word;
+  margin-top: 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.score-table th,
+.score-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  text-align: center;
+  vertical-align: middle;
+}
+.score-table thead th {
+  background: var(--surface-2);
+  font-weight: 800;
+}
+.score-table tr:last-child td { border-bottom: none; }
+
+/* badges */
+.priority-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  border: 1px solid currentColor;
+}
+.priority-高 { color: #b91c1c; background: #fee2e2; }
+.priority-中 { color: #9a3412; background: #ffedd5; }
+.priority-低 { color: #065f46; background: #d1fae5; }
+
+/* footer */
+.report-footer {
+  margin-top: 28px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* print button (screen only) */
+.print-cta {
+  display: flex;
+  justify-content: center;
+  margin: 10px 0 0;
+}
+.print-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 700;
+  padding: 10px 18px;
+  color: #fff;
+  background: var(--brand);
+  border: 0;
+  border-radius: 10px;
+  cursor: pointer;
+}
+.print-button:hover { filter: brightness(0.95); }
+
+/* ensure long URLs wrap */
+a { word-break: break-all; }
+
+/* PRINT — real A4 layout */
+@page {
+  size: A4 portrait;
+  margin: 12mm;   /* paper margin; content padding handled by .page */
+}
+@media print {
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  html, body {
+    background: #fff !important;
+  }
+  .wrapper {
+    padding: 0 !important;
+    display: block !important;
+  }
+  .page {
+    /* Let content flow naturally across pages */
+    max-width: none !important;
+    width: auto !important;
+    padding: 10mm !important; /* inner padding so text doesn't touch edges */
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+  .report-header { border-bottom-color: #999 !important; }
+  .score-table { border-color: #999 !important; }
+  .score-table thead th { background: #eee !important; }
+  .print-cta, .no-print { display: none !important; }
+}
+
+/* helpers for manual page breaks if needed */
+.page-break { break-after: page; }
+
+/* --- layout patch for right-aligned print button --- */
+
+.print-cta {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  width: 100%;
+  max-width: 210mm;      /* align width with the .page card */
+  margin: 12px auto 0;   /* center the row; add a bit of top spacing */
+  padding: 0 4px;
+}
+.print-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 700;
+  padding: 10px 18px;
+  color: #fff;
+  background: var(--brand);
+  border: 0;
+  border-radius: 10px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.print-button:hover { filter: brightness(0.95); }
+
+/* --- additions for centering and URL modal --- */
+
+/* center header title/id */
+.report-header { text-align: center; }
+/* center footer content */
+.report-footer { text-align: center; }
+
+/* Modal for long reference URLs */
+.modal { 
+  position: fixed; inset: 0; display: none; align-items: center; justify-content: center; 
+  z-index: 9999;
+}
+.modal[aria-hidden="false"] { display: flex; }
+.modal-backdrop { position: absolute; inset: 0; background: rgba(2,6,23,0.5); }
+.modal-dialog {
+  position: relative;
+  width: min(90vw, 720px);
+  max-height: 80vh;
+  overflow: auto;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 20px 50px rgba(2,6,23,0.35);
+  padding: 20px;
+}
+.modal-dialog h3 { margin: 0 0 10px 0; font-size: 18px; }
+.modal-dialog p { margin: 0 0 16px 0; }
+.break-all { word-break: break-all; }
+.btn { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 8px; border: 0; background: var(--brand); color:#fff; cursor:pointer; }
+.btn:hover { filter: brightness(0.95); }
+
+/* a simple inline link-like button */
+.link-modal-open { border: 0; background: transparent; color: var(--brand); text-decoration: underline; cursor: pointer; padding: 0; font: inherit; }
+
+@media print {
+  .modal { display: none !important; }
+}
+</style>
 </head>
 <body>
-  
-  <div class="no-print print-button-container">
+
+  <div class="print-cta no-print" style="display:flex;justify-content:center;margin:16px auto;">
     <button class="print-button" onclick="window.print()">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="20" height="20"><path fill-rule="evenodd" d="M5 2.5A2.5 2.5 0 0 0 2.5 5v1.25a.75.75 0 0 0 1.5 0V5a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1.25a.75.75 0 0 0 1.5 0V5A2.5 2.5 0 0 0 15 2.5H5Z" clip-rule="evenodd" /><path d="M2.5 8.5A.5.5 0 0 1 3 8h14a.5.5 0 0 1 .5.5v5a.5.5 0 0 1-.5.5H3a.5.5 0 0 1-.5-.5v-5Z" /><path fill-rule="evenodd" d="M5 15.5A2.5 2.5 0 0 0 2.5 13V9h15v4a2.5 2.5 0 0 1-2.5 2.5H5Zm1-2.5a.5.5 0 0 0 0 1h8a.5.5 0 0 0 0-1H6Z" clip-rule="evenodd" /></svg>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="20" height="20">
+        <path fill-rule="evenodd" d="M5 2.5A2.5 2.5 0 0 0 2.5 5v1.25a.75.75 0 0 0 1.5 0V5a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1.25a.75.75 0 0 0 1.5 0V5A2.5 2.5 0 0 0 15 2.5H5Z" clip-rule="evenodd" />
+        <path d="M2.5 8.5A.5.5 0 0 1 3 8h14a.5.5 0 0 1 .5.5v5a.5.5 0 0 1-.5.5H3a.5.5 0 0 1-.5-.5v-5Z" />
+        <path fill-rule="evenodd" d="M5 15.5A2.5 2.5 0 0 0 2.5 13V9h15v4a2.5 2.5 0 0 1-2.5 2.5H5Zm1-2.5a.5.5 0 0 0 0 1h8a.5.5 0 0 0 0-1H6Z" clip-rule="evenodd" />
+      </svg>
       <span>このレポートを印刷</span>
     </button>
   </div>
 
+  <div class="wrapper">
+
   <div class="page">
     <header class="report-header">
-      <h1 class="report-title">リスクアセスメントレポート</h1>
+      <h1 class="report-title" style="margin-top:4px;">リスクアセスメントレポート</h1>
       <p class="report-id">ID: <?= data.unique_id ?></p>
     </header>
 
@@ -107,8 +282,8 @@
         <h2 class="section-title">1. 基本情報</h2>
         <div class="info-grid">
           <div class="info-label">件名</div><div><?= data.subject ?></div>
-          <!-- ★修正: formatDate -> formatDateForHtml -->
           <div class="info-label">発見日時</div><div><?= formatDateForHtml(data.timestamp) ?></div>
+          <div class="info-label">最終通知日時</div><div><?= formatDateForHtml(data.final_notification_timestamp) ?></div>
           <div class="info-label">発見者</div><div><?= data.discoverer_email ?></div>
           <div class="info-label">内容詳細</div><div class="pre-wrap"><?= data.details ?></div>
           <div class="info-label">リスク評価者</div><div><?= data.hopeful_evaluator ?></div>
@@ -135,7 +310,10 @@
             <div class="info-label">費用</div><div><?= data.cost ? `¥${Number(data.cost).toLocaleString()}` : '-' ?></div>
             <div class="info-label">工数</div><div><?= data.effort ? `${data.effort} 時間` : '-' ?></div>
             <div class="info-label">効果</div><div><?= data.effect ?></div>
-            <div class="info-label">参考URL</div><div><?= data.reference_url ? `<a href="${data.reference_url}" target="_blank">${data.reference_url}</a>` : '-' ?></div>
+            <!-- ★★★ ここに移動 ★★★ -->
+            <? if (data.reference_url) { ?>
+              <div class="info-label">参考URL</div><div><a href="<?= data.reference_url ?>" target="_blank"><?= data.reference_url ?></a></div>
+            <? } ?>
         </div>
       </section>
 
@@ -149,15 +327,74 @@
           <div class="info-label">最終評価コメント</div><div class="pre-wrap"><?= data.final_eval_comment ?></div>
         </div>
       </section>
+      
+      <!-- ★追加: OJT情報セクション -->
+      <? if (data.ojt_id) { ?>
+      <section class="section">
+        <h2 class="section-title">5. OJT情報</h2>
+        <div class="info-grid">
+          <div class="info-label">OJT ID</div><div><?= data.ojt_id ?></div>
+          <div class="info-label">OJT登録内容</div><div class="pre-wrap"><?= data.ojt_details ?></div>
+        </div>
+      </section>
+      <? } ?>
     </main>
 
     <footer class="report-footer">
-      <!-- ★修正: formatDate -> formatDateForHtml -->
-      ZEROSYSTEM | 出力日時: <?= formatDateForHtml(new Date()) ?>
+      <div>ZEROSYSTEM | 出力日時: <?= formatDateForHtml(new Date()) ?></div>
+      <!-- ★★★ ここから削除 ★★★ -->
     </footer>
   </div>
    <script>
     // formatDateForHtml関数はサーバーサイドで定義されているため、ここでは不要
    </script>
+  </div>
+
+  <!-- URL Modal -->
+  <div id="link-modal" class="modal no-print" aria-hidden="true">
+    <div class="modal-backdrop" data-close="true"></div>
+    <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <h3 id="modal-title">参考URL</h3>
+      <p class="break-all">
+        <a id="modal-link" href="#" target="_blank" rel="noopener"></a>
+      </p>
+      <button id="modal-close" class="btn">閉じる</button>
+    </div>
+  </div>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const modal = document.getElementById('link-modal');
+  const modalLink = document.getElementById('modal-link');
+  const closeBtn = document.getElementById('modal-close');
+
+  function openModal(url) {
+    if (!modal) return;
+    modalLink.href = url;
+    modalLink.textContent = url;
+    modal.setAttribute('aria-hidden', 'false');
+  }
+  function closeModal() {
+    if (!modal) return;
+    modal.setAttribute('aria-hidden', 'true');
+  }
+  document.body.addEventListener('click', function(e) {
+    const openBtn = e.target.closest('.link-modal-open');
+    if (openBtn) {
+      const url = openBtn.getAttribute('data-url');
+      if (url) { openModal(url); }
+    }
+    if (e.target.matches('[data-close]') || e.target === closeBtn) {
+      closeModal();
+    }
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeModal();
+  });
+});
+</script>
+
 </body>
 </html>
+

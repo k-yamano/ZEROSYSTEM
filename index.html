@@ -133,12 +133,11 @@
                       <input type="email" name="team_member_3" class="form-input" placeholder="協力者2" value="<?= data.team_member_3 || '' ?>" <?= !isImprovementActive ? 'disabled' : '' ?>>
                   </div>
                 </div>
-                 <div class="form-group">
+                <div class="form-group">
                     <label class="form-label">参考URL</label>
                     <input type="url" name="reference_url" class="form-input" value="<?= data.reference_url || '' ?>" <?= !isImprovementActive ? 'disabled' : '' ?>>
-                 </div>
-                 
-                <!-- ★★★ OJT関連セクションを全面的に修正 ★★★ -->
+                </div>
+                
                 <div class="form-group internal-card">
                   <label class="form-label">OJT関連</label>
                   <div class="form-grid-ojt">
@@ -225,14 +224,20 @@
             </div>
         </div>
         <? } ?>
-
-          <div class="final-eval-section section-control-split">
-            <h3>OJT実施状況確認</h3>
-            <div class="control-group">
+        
+          <div class="final-eval-section ojt-final-section">
+            <h3>OJT実施状況</h3>
+            <div class="info-grid">
+                <div class="info-label">OJT ID</div>
+                <div class="info-value"><?= data.ojt_id || '-' ?></div>
+                <div class="info-label">OJT登録内容</div>
+                <div class="info-value pre-wrap"><?= data.ojt_details || '-' ?></div>
+            </div>
+            <div class="ojt-final-controls">
                 <a href="https://script.google.com/a/macros/shabon.com/s/AKfycbz_4dkEmkyCndlrYdUUuqgzrioddSJ0givqmuh-LTviiD9wIV_jrgEIbqB5dycm6kem7A/exec" target="_blank" class="btn btn-secondary">OJT確認</a>
                 <button type="button" class="btn-toggle" data-target="ojt_confirmed_final" <?= !isFinalEvalActive ? 'disabled' : '' ?>>
                   <input type="hidden" name="ojt_confirmed_final" id="ojt_confirmed_final" value="<?= data.ojt_confirmed_final ? 'true' : 'false' ?>">
-                  <span class="text-on">OJT実施を確認済</span><span class="text-off">OJT実施は未確認</span>
+                  <span class="text-on">実施を確認済</span><span class="text-off">実施は未確認</span>
                 </button>
             </div>
           </div>

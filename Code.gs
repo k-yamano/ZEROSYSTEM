@@ -1,8 +1,40 @@
 /**
+ * ★追加：OJT IDをキーにして、別のスプレッドシートからOJTの登録内容を取得する
+ * @param {string} ojtId - 検索対象のOJT ID
+ * @returns {string} - 見つかったOJT項目、見つからなければ空文字
+ */
+function getOjtDetails_(ojtId) {
+  if (!ojtId) return "";
+  try {
+    const ojtSheetId = "1sXRUGEviaDGFwu2OAiiNPz9wMaxYsy-gdohBmDxUK7k"; // OJT登録シートのID
+    const ojtSheet = SpreadsheetApp.openById(ojtSheetId).getSheets()[0]; // 最初のシートを対象とする
+    const data = ojtSheet.getDataRange().getValues();
+    const headers = data.shift(); // ヘッダー行を取得
+
+    // M列（ID）とD列（OJT項目）のインデックスを取得
+    const idColIndex = headers.indexOf("ID");
+    const detailsColIndex = headers.indexOf("OJT項目を記入してください");
+
+    if (idColIndex === -1 || detailsColIndex === -1) {
+      Logger.log("OJTシートのヘッダーが見つかりません（ID または OJT項目を記入してください）");
+      return "（OJTシートの列が見つかりません）";
+    }
+
+    // OJT IDに一致する行を探す
+    for (let i = 0; i < data.length; i++) {
+      if (data[i][idColIndex] == ojtId) {
+        return data[i][detailsColIndex]; // D列の内容を返す
+      }
+    }
+    return "（該当するOJT情報なし）";
+  } catch (e) {
+    Logger.log(`OJT詳細の取得中にエラーが発生しました: ${e.message}`);
+    return `（エラー: ${e.message}）`;
+  }
+}
+
+/**
  * Webアプリケーションにアクセスがあった際のメインの処理（エントリーポイント）です。
- * URLのIDに基づいてデータを取得し、HTMLテンプレートに渡してUIを生成します。
- * @param {object} e - Webアプリへのリクエスト情報を含むイベントオブジェクト
- * @returns {HtmlOutput} - 表示するHTMLページ
  */
 function doGet(e) {
   try {
@@ -14,6 +46,13 @@ function doGet(e) {
     const incidentData = getDataById(id);
     if (!incidentData || Object.keys(incidentData).length === 0) {
       return HtmlService.createHtmlOutput(`<h1>エラー: ID「${id}」のデータが見つかりません。</h1>`);
+    }
+
+    // ★修正: OJT詳細を取得してデータに追加
+    if (incidentData.ojt_id) {
+      incidentData.ojt_details = getOjtDetails_(incidentData.ojt_id);
+    } else {
+      incidentData.ojt_details = "（OJT ID未登録）";
     }
 
     const view = (e.parameter.view || '').toString();
@@ -31,7 +70,6 @@ function doGet(e) {
     const template = HtmlService.createTemplateFromFile('index');
     template.data = incidentData;
     
-    // 部署のリストをテンプレートに渡す
     const props = PropertiesService.getScriptProperties();
     const deptsJson = props.getProperty('DEPT_WEBHOOKS_JSON') || '{}';
     template.departments = Object.keys(JSON.parse(deptsJson));
@@ -48,27 +86,20 @@ function doGet(e) {
 
 /**
  * HTMLテンプレート内で別のHTMLファイル（CSSやJavaScript）を読み込むためのヘルパー関数です。
- * @param {string} filename - 読み込むファイル名（拡張子なし）
- * @returns {string} - ファイルのコンテンツ
  */
 function include(filename) {
   return HtmlService.createHtmlOutputFromFile(filename).getContent();
 }
 
-
 /**
- * ★★★ HTMLテンプレート専用の日付フォーマット関数 ★★★
- * 日付オブジェクトを指定された書式の文字列に変換します。
- * @param {Date | string} date - 変換する日付
- * @param {string} format - 出力する日付の書式
- * @returns {string} - フォーマットされた日付文字列
+ * HTMLテンプレートから呼び出すための日付フォーマット関数
  */
 function formatDateForHtml(date, format = 'yyyy/MM/dd HH:mm') {
     if(!date) return '';
     try {
       return Utilities.formatDate(new Date(date), 'JST', format);
     } catch(e) {
-      return ''; // 無効な日付の場合は空文字を返す
+      return '';
     }
 }
 
